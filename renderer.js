@@ -13,7 +13,10 @@ Renderer = function(canvas){
     this.canvas = canvas; this.gl = gl;
     
     this.near = 0.1; this.far = 100.0;
-    this.width = $(canvas).width(); this.height = $(canvas).height();     
+    this.width = $(canvas).width(); this.height = $(canvas).height();   
+
+    //this.Camera = { position: vec3.create(), heading: mazeData.startHeading, FOV: null };        
+    //vec3.set(this.Camera.position, mazeData.startPosition[0]+0.5, mazeData.startPosition[1]+0.5, 0);
     
     this.Update = function(delta)
     {
@@ -28,7 +31,7 @@ Renderer = function(canvas){
         
         if (this.loaded)
         {
-            var now = Date.now(); var delta = (now-this.lastT)/1000; this.lastT = now; this.Update(delta); var exposure = UI.getExposure();
+            var now = Date.now(); var delta = (now-this.lastT)/1000; this.lastT = now; this.Update(delta); //var exposure = UI.getExposure();
 
             /*program = this.getProgram('skybox','skybox'); gl.useProgram(program);
             gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);        
