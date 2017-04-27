@@ -25,6 +25,43 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
   request.send();
 })
 
+
+/* From: https://gist.github.com/gre/1650294
+ * Easing Functions - inspired from http://gizma.com/easing/
+ * only considering the t value for the range [0, 1] => [0, 1]
+ */
+const ease = {
+  // no easing, no acceleration
+  linear: t => t,
+  // accelerating from zero velocity
+  inQuad: t => t*t,
+  // decelerating to zero velocity
+  outQuad: t => t*(2-t),
+  // acceleration until halfway, then deceleration
+  inOutQuad: t => t<.5 ? 2*t*t : -1+(4-2*t)*t,
+  // accelerating from zero velocity 
+  inCubic: t => t*t*t,
+  // decelerating to zero velocity 
+  outCubic: t => (--t)*t*t+1,
+  // acceleration until halfway, then deceleration 
+  inOutCubic: t => t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1,
+  // accelerating from zero velocity 
+  inQuart: t => t*t*t*t,
+  // decelerating to zero velocity 
+  outQuart: t => 1-(--t)*t*t*t,
+  // acceleration until halfway, then deceleration
+  inOutQuart: t => t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t,
+  // accelerating from zero velocity
+  inQuint: t => t*t*t*t*t,
+  // decelerating to zero velocity
+  outQuint: t => 1+(--t)*t*t*t*t,
+  // acceleration until halfway, then deceleration 
+  inOutQuint: t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t,
+  // threshold
+  threshold: x => t => t < x ? 0 : 1
+}
+
+
 /**
  * Wraps an analizer node for easy access to a stream's
  * frequency data. 
@@ -47,11 +84,12 @@ class FrequencyBandAnalizer {
     this.source.connect(this.analyser);
   }
 
-  /** [20, 20,000] -> [0 -> 255] */
-  getFrequencyValue(freq) {
+  /** [20, 20,000] -> [0, 1] */
+  getFrequencyValue(freq, easing) {
+    easing = easing || ease.linear
     const nyquist = context.sampleRate/2;
     const index = Math.floor(freq/nyquist * this.freqs.length);
-    return this.freqs[index];
+    return easing(this.freqs[index]/255);
   }
 
   update() {  
@@ -129,8 +167,8 @@ class VisualizerSample {
       drawContext.fillRect(i * barWidth, offset, barWidth, height);
     }
 
-    const a = this.bandan.getFrequencyValue(30)
-    const b = this.bandan.getFrequencyValue(22000)
+    const a = this.bandan.getFrequencyValue(30, ease.inQuad) * 100
+    const b = this.bandan.getFrequencyValue(22000, ease.outQuad) * 100
     drawContext.rect(a,20,b,100);
     drawContext.stroke();
   
