@@ -1,5 +1,4 @@
 
-
 /**
  * Wraps an analizer node for easy access to a stream's
  * frequency data. 
