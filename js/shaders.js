@@ -1,3 +1,26 @@
+class Camera {
+    constructor(viewPoint, viewDir, viewUp, projD) {
+        this.viewPoint = viewPoint;
+        this.viewDir = viewDir;
+        this.viewUp = viewUp;
+        this.projD = projD;
+        this.viewWidth = 1.0;
+        this.viewHeight = 1.0;
+
+        //create w basis vector
+        this.basisW = vec3.clone(this.viewDir);
+        vec3.normalize(this.basisW,vec3.negate(this.basisW, this.basisW));
+
+        //create u basis vector
+        this.basisU = vec3.clone(this.viewUp);
+        vec3.normalize(this.basisU, vec3.cross(this.basisU, this.basisU, this.basisW));
+
+        //create v basis vector
+        this.basisV = vec3.clone(this.basisW);
+        vec3.normalize(this.basisV, vec3.cross(this.basisV, this.basisW, this.basisU));
+    }
+}
+
 function initializeWebGL(canvas) {
         var gl = null;
         try {
@@ -166,6 +189,49 @@ var canvas = $("#webglCanvas")[0]
 var gl = initializeWebGL(canvas);
 var program = createGlslProgram(gl, "vertexShader", "fragmentShader");
 var sphere;
+
+//initialize camera
+var viewPoint = vec3.fromValues(0.0,0.0,1.0);
+var viewDir = vec3.fromValues(0.0,0.0,-1.0);
+var viewUp = vec3.fromValues(0.0,1.0,0.0);
+var camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
+
+//mouse lock stuff
+// pointer lock object forking for cross browser
+
+canvas.requestPointerLock = canvas.requestPointerLock ||
+                            canvas.mozRequestPointerLock;
+
+document.exitPointerLock = document.exitPointerLock ||
+                           document.mozExitPointerLock;
+
+canvas.onclick = function() {
+  canvas.requestPointerLock();
+};
+
+// pointer lock event listeners
+
+// Hook pointer lock state change events for different browsers
+document.addEventListener('pointerlockchange', lockChangeAlert, false);
+document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+
+function lockChangeAlert() {
+  if (document.pointerLockElement === canvas ||
+      document.mozPointerLockElement === canvas) {
+    console.log('The pointer lock status is now locked');
+    document.addEventListener("mousemove", updatePosition, false);
+  } else {
+    console.log('The pointer lock status is now unlocked');  
+    document.removeEventListener("mousemove", updatePosition, false);
+  }
+}
+
+var clientRect = $("#webglCanvas")[0].getBoundingClientRect();
+
+function updatePosition(e) {
+    var xRot = (e.movementX/canvas.width)*2*Math.PI;
+    var yRot = (e.movementY/canvas.height)*2*Math.PI;
+}
 
 function runWebGL(){
 
