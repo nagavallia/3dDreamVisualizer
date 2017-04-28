@@ -50,12 +50,14 @@
 
     attribute vec3 position;
     uniform mat4 toWorld;
+    uniform bool use_textures;
     attribute vec2 vert_texCoord;
-
     varying vec2 geom_texCoord;
     
     void main() {
-        geom_texCoord = vert_texCoord;
+        if (use_textures){
+            geom_texCoord = vert_texCoord;
+        }
         gl_Position = toWorld * vec4(position, 1.0);
     }
 
@@ -64,13 +66,17 @@
 <script id="fragmentShader" type="x-shader/x-fragment">
 
     precision highp float;
-    // uniform vec3 color;
+    uniform vec3 color;
+    uniform bool use_textures;
     uniform sampler2D texture;
     varying vec2 geom_texCoord;
     
     void main() {
-        // gl_FragColor = vec4(color, 0.0);
-        gl_FragColor = texture2D(texture, geom_texCoord);
+        if (use_textures){
+            gl_FragColor = texture2D(texture, geom_texCoord);
+        } else {
+            gl_FragColor = vec4(color, 0.0);
+        }
     }
 
 </script>
