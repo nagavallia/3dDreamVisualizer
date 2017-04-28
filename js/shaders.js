@@ -223,7 +223,9 @@ function runWebGL(){
 
             sphere = createShape(gl, mesh);
             // TODO remove this at some point
-            animations.push(new Animation(mesh, sphere, "scale", 2.0));
+            anim = new Animation(mesh, sphere);
+            anim.addScale(2.0);
+            animations.push(anim);
 
             window.requestAnimationFrame(updateWebGl);
 
@@ -237,6 +239,7 @@ var ENABLE_TEXTURES = false;
 var animations = [];
 var animation_i = 0.0;
 var mesh = {};
+var anim;
 
 if (ENABLE_TEXTURES){
     var earthImage =  new Image();
