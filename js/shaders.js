@@ -77,7 +77,13 @@ function createShape(gl, data) {
     return shape;
 }
 
-function drawShape(gl, shape, program, xf, texture) {
+function updateShapeVertices(gl, shape, verts){
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}
+
+function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     var positionLocation = gl.getAttribLocation(program, "position");
@@ -94,11 +100,19 @@ function drawShape(gl, shape, program, xf, texture) {
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "toWorld"), false, xf);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
 
-    if (gl.getUniformLocation(program, "texture") != null) {
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        var textureLocation = gl.getUniformLocation(program, "texture");
-        gl.uniform1i(textureLocation, 0);
+    var useTexsLocation = gl.getUniformLocation(program, "use_textures");
+    gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
+
+    if (ENABLE_TEXTURES){
+        if (gl.getUniformLocation(program, "texture") != null) {
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            var textureLocation = gl.getUniformLocation(program, "texture");
+            gl.uniform1i(textureLocation, 0);
+        }
+    } else {
+        var colorLocation = gl.getUniformLocation(program, "color");
+        gl.uniform3fv(colorLocation, shape.fillColor)
     }
     
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
@@ -121,8 +135,24 @@ function requestOBJFile(filename){ return new Promise((res, rej) => {
     request.send();
 })}
 
-
+var inc = 0.01;
 function updateWebGl(time) {
+
+    // TODO replace with values from music
+    animation_i += inc;
+    if (animation_i > 1.0){
+        inc = -0.01;
+    } else if (animation_i < 0.0){
+        inc = 0.01;
+    }    
+
+    animations.forEach(function(elem){
+        elem.apply(animation_i);
+        // TODO might want to update more of the shape buffers, ie color, but 
+        // there is no need to rewrite the index buffers every time since those do not change
+        updateShapeVertices(gl, elem.shape, elem.mesh.vertices);
+    });
+
     // Draw sky
     gl.clearColor(0.6, 0.6, 1.0, 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -140,7 +170,12 @@ function updateWebGl(time) {
     var xf = mat4.create();
     mat4.multiply(xf, perspective, cameraLoc);
     mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
-    drawShape(gl, sphere, program, xf, wallTexture);
+    if (ENABLE_TEXTURES){
+        drawShape(gl, sphere, program, xf, wallTexture);    
+    } else {
+        drawShape(gl, sphere, program, xf);
+    }
+    
 
     gl.useProgram(null);
     window.requestAnimationFrame(updateWebGl);
@@ -158,25 +193,26 @@ function runWebGL(){
     gl.depthFunc(gl.LESS);
     gl.enable(gl.DEPTH_TEST);
 
-    // Step 1: Create the texture object.
-    wallTexture = gl.createTexture();
-    // Step 2: Bind the texture object to the "target" TEXTURE_2D
-    gl.bindTexture(gl.TEXTURE_2D, wallTexture);
-    // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
-    //         so that we don't have to deal with flipping the y-coordinate.
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    // Step 4: Download the image data to the GPU.
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, earthImage);
-    // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
-    gl.generateMipmap(gl.TEXTURE_2D);
-    // Step 6: Clean up.  Tell WebGL that we are done with the target.
-    gl.bindTexture(gl.TEXTURE_2D, null);
+    if (ENABLE_TEXTURES){
+        // Step 1: Create the texture object.
+        wallTexture = gl.createTexture();
+        // Step 2: Bind the texture object to the "target" TEXTURE_2D
+        gl.bindTexture(gl.TEXTURE_2D, wallTexture);
+        // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
+        //         so that we don't have to deal with flipping the y-coordinate.
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        // Step 4: Download the image data to the GPU.
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, earthImage);
+        // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
+        gl.generateMipmap(gl.TEXTURE_2D);
+        // Step 6: Clean up.  Tell WebGL that we are done with the target.
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
 
     requestOBJFile('sphere.obj')
         .then(response => {
 
             var parsed = K3D.parse.fromOBJ(response);
-            var mesh = {};
             mesh.vertices = parsed.c_verts;
             mesh.lineInd = [];
             mesh.uvs = parsed.c_uvt;
@@ -185,6 +221,8 @@ function runWebGL(){
             mesh.fillColor = [1.0, 0.0, 0.0];
 
             sphere = createShape(gl, mesh);
+            // TODO remove this at some point
+            animations.push(new Animation(mesh, sphere, "scale", 2.0));
 
             window.requestAnimationFrame(updateWebGl);
 
@@ -193,8 +231,18 @@ function runWebGL(){
 
 }
 
-var earthImage =  new Image();
-earthImage.onload = function() {
+var ENABLE_TEXTURES = false;
+
+var animations = [];
+var animation_i = 0.0;
+var mesh = {};
+
+if (ENABLE_TEXTURES){
+    var earthImage =  new Image();
+    earthImage.onload = function() {
+        runWebGL();
+    };
+    earthImage.src = "data/earth.png";
+} else {
     runWebGL();
-};
-earthImage.src = "data/earth.png";
+}
