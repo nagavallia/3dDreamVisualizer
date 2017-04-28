@@ -1,3 +1,4 @@
+
 function initializeWebGL(canvas) {
         var gl = null;
         try {
@@ -5,9 +6,7 @@ function initializeWebGL(canvas) {
             if (!gl) {
                 gl = canvas.getContext("webgl");
             }
-        } catch (error) {
-            // ehh
-        }
+        } catch (error) { console.error(error) }
         if (!gl) {
             alert("Could not get WebGL context!");
             throw new Error("Could not get WebGL context!");
