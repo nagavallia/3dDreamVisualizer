@@ -239,16 +239,16 @@ function lockChangeAlert() {
   if (document.pointerLockElement === canvas ||
       document.mozPointerLockElement === canvas) {
     console.log('The pointer lock status is now locked');
-    document.addEventListener("mousemove", updatePosition, false);
+    document.addEventListener("mousemove", rotateCamera, false);
   } else {
     console.log('The pointer lock status is now unlocked');  
-    document.removeEventListener("mousemove", updatePosition, false);
+    document.removeEventListener("mousemove", rotateCamera, false);
   }
 }
 
 var clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 
-function updatePosition(e) {
+function rotateCamera(e) {
     var xRot = (e.movementX/canvas.width)*2*Math.PI;
     var yRot = (e.movementY/canvas.height)*2*Math.PI;
 }
