@@ -28,9 +28,7 @@ function initializeWebGL(canvas) {
             if (!gl) {
                 gl = canvas.getContext("webgl");
             }
-        } catch (error) {
-            // ehh
-        }
+        } catch (error) { console.error(error) }
         if (!gl) {
             alert("Could not get WebGL context!");
             throw new Error("Could not get WebGL context!");
@@ -101,6 +99,12 @@ function createShape(gl, data) {
     return shape;
 }
 
+function updateShapeVertices(gl, shape, verts){
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}
+
 function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
@@ -153,8 +157,24 @@ function requestOBJFile(filename){ return new Promise((res, rej) => {
     request.send();
 })}
 
-
+var inc = 0.01;
 function updateWebGl(time) {
+
+    // TODO replace with values from music
+    animation_i += inc;
+    if (animation_i > 1.0){
+        inc = -0.01;
+    } else if (animation_i < 0.0){
+        inc = 0.01;
+    }    
+
+    animations.forEach(function(elem){
+        elem.apply(animation_i);
+        // TODO might want to update more of the shape buffers, ie color, but 
+        // there is no need to rewrite the index buffers every time since those do not change
+        updateShapeVertices(gl, elem.shape, elem.mesh.vertices);
+    });
+
     // Draw sky
     gl.clearColor(0.6, 0.6, 1.0, 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -258,7 +278,6 @@ function runWebGL(){
         .then(response => {
 
             var parsed = K3D.parse.fromOBJ(response);
-            var mesh = {};
             mesh.vertices = parsed.c_verts;
             mesh.lineInd = [];
             mesh.uvs = parsed.c_uvt;
@@ -267,6 +286,8 @@ function runWebGL(){
             mesh.fillColor = [1.0, 0.0, 0.0];
 
             sphere = createShape(gl, mesh);
+            // TODO remove this at some point
+            animations.push(new Animation(mesh, sphere, "scale", 2.0));
 
             window.requestAnimationFrame(updateWebGl);
 
@@ -276,6 +297,10 @@ function runWebGL(){
 }
 
 var ENABLE_TEXTURES = false;
+
+var animations = [];
+var animation_i = 0.0;
+var mesh = {};
 
 if (ENABLE_TEXTURES){
     var earthImage =  new Image();
