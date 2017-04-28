@@ -1,4 +1,6 @@
 
+/*********************************** audio ***********************************/
+
 /** Create a new audio context */
 const context = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -13,7 +15,7 @@ if (!context.createScriptProcessor)
 // const freqcanv = document.getElementById('freqcanvas')
 // const playbutton = document.getElementById('playbutton')
 
-loadAudio(context, '/songs/shooting_stars.mp3')
+loadAudio(context, '../songs/shooting_stars.mp3')
 .then(buffer => {
   const vizsample = new VisualizerSample(freqcanvas, buffer);
   playbutton.removeAttribute('disabled')
@@ -23,3 +25,4 @@ loadAudio(context, '/songs/shooting_stars.mp3')
 
 })
 .catch(console.error)
+
