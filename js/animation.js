@@ -1,33 +1,46 @@
 class Animation {
-    constructor(mesh, shape, type, par) {
+    constructor(mesh, shape) {
         // the triangle mesh object with vertices, triIndices, etc
         this.mesh = mesh
+        this.orig = jQuery.extend(true, {}, mesh);
         // the gl shape object returned by createShape
         this.shape = shape
-        this.type = type
-        this.par = par
-
-        switch (this.type){
-            case "scale":
-                this.apply = this.scale
-                this.min_verts = this.mesh.vertices
-                this.max_verts = this.mesh.vertices.map(function(v){
-                    return v*par;
-                });
-                break;
-            default:
-                console.log("Unknown animation type")
-                return;
-        }
+        this.transformations = [];
+        
     }
 
-    scale(i){
-        i = this._clamp(i);
+    apply(i){
+        this.mesh = jQuery.extend(true, {}, this.orig);
+        var self = this;
 
-        mesh.vertices = [];
-        for (var j=0; j<this.min_verts.length; j++){
-            mesh.vertices.push(this._interpolate(this.min_verts[j], this.max_verts[j], i));
-        }
+        this.transformations.forEach(function(elem){
+            elem(this.mesh, i);
+        });
+    }
+
+    addScale(amt){
+        this.transformations.push(scale(amt));
+    }
+
+    addTranslate(amt){
+        this.transformations.push(["translate", amt]);
+    }
+
+    const scale = (s) => (m, t) => {
+        m.vertices = m.vertices.map((vertex) => vertex * (s * t))
+        return m
+    }
+
+    const translate = (x, y, z) => (m, t) => {
+        m.vertices = m.vertices.map((vertex, i) => { switch (i%3) {
+            case 0: return vertex + (x * t)
+            case 1: return vertex + (y * t)
+            case 2: return vertex + (z * t)
+        }})
+        return m
+    }
+
+    spikey(i){
 
     }
 
