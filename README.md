@@ -1,6 +1,8 @@
 # pracfinal
 
-Used k3d (http://k3d.ivank.net)
+Used k3d (http://k3d.ivank.net), pointer lock demo (https://mdn.github.io/dom-examples/pointer-lock/)
+
+click to lock mouse, escape to unlock
 
 Team Members
 - Arnesh Nagavalli (amn79)
