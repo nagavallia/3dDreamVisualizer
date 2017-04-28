@@ -15,7 +15,7 @@ if (!context.createScriptProcessor)
 // const freqcanv = document.getElementById('freqcanvas')
 // const playbutton = document.getElementById('playbutton')
 
-loadAudio(context, '../songs/shooting_stars.mp3')
+loadAudio(context, 'songs/shooting_stars.mp3')
 .then(buffer => {
   const vizsample = new VisualizerSample(freqcanvas, buffer);
   playbutton.removeAttribute('disabled')
