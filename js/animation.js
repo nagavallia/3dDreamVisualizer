@@ -6,6 +6,20 @@ class Animation {
         // the gl shape object returned by createShape
         this.shape = shape
         this.transformations = [];
+
+        this.scale = (s) => (m, t) => {
+            m.vertices = m.vertices.map((vertex) => vertex * (s * t))
+            return m
+        }
+
+        this.translate = (x, y, z) => (m, t) => {
+            m.vertices = m.vertices.map((vertex, i) => { switch (i%3) {
+                case 0: return vertex + (x * t)
+                case 1: return vertex + (y * t)
+                case 2: return vertex + (z * t)
+            }})
+            return m
+        }
         
     }
 
@@ -14,31 +28,17 @@ class Animation {
         var self = this;
 
         this.transformations.forEach(function(elem){
-            elem(this.mesh, i);
+            elem(self.mesh, i);
         });
     }
 
     addScale(amt){
-        this.transformations.push(scale(amt));
+        this.transformations.push(this.scale(amt));
     }
 
-    addTranslate(amt){
-        this.transformations.push(["translate", amt]);
-    }
-
-    const scale = (s) => (m, t) => {
-        m.vertices = m.vertices.map((vertex) => vertex * (s * t))
-        return m
-    }
-
-    const translate = (x, y, z) => (m, t) => {
-        m.vertices = m.vertices.map((vertex, i) => { switch (i%3) {
-            case 0: return vertex + (x * t)
-            case 1: return vertex + (y * t)
-            case 2: return vertex + (z * t)
-        }})
-        return m
-    }
+    addTranslate(x,y,z){
+        this.transformations.push(this.translate(x,y,z));
+    }    
 
     spikey(i){
 

@@ -287,8 +287,9 @@ function runWebGL(){
 
             sphere = createShape(gl, mesh);
             // TODO remove this at some point
-            anim = new Animation(mesh, sphere);
+            var anim = new Animation(mesh, sphere);
             anim.addScale(2.0);
+            anim.addTranslate(0.0,2.0,0.0);
             animations.push(anim);
 
             window.requestAnimationFrame(updateWebGl);
@@ -298,12 +299,11 @@ function runWebGL(){
 
 }
 
-var ENABLE_TEXTURES = false;
+var ENABLE_TEXTURES = true;
 
 var animations = [];
 var animation_i = 0.0;
 var mesh = {};
-var anim;
 
 if (ENABLE_TEXTURES){
     var earthImage =  new Image();
