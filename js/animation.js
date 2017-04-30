@@ -6,7 +6,11 @@ class Animation {
         // the gl shape object returned by createShape
         this.shape = shape
         this.transformations = [];
+        this.sequence_i = 0;
 
+        // this scale is weird if the object is not centered..
+        // probably want to fix this so that scale behaves similarly
+        // at all locations
         this.scale = (s) => (m, t) => {
             m.vertices = m.vertices.map((vertex) => vertex * (s * t))
             return m
@@ -19,6 +23,20 @@ class Animation {
                 case 2: return vertex + (z * t)
             }})
             return m
+        }
+
+        this.seq = (funcs) => (m, t) => {
+            var seq_t = t*funcs.length - 0.0001; // for round off
+            var cur_anim_t = seq_t % 1;
+            var cur_anim = seq_t - cur_anim_t;
+
+            // apply finished functions
+            for (var i=0; i<cur_anim; i++){
+                funcs[i](m,1);
+            }
+
+            // partially apply current anim
+            return funcs[cur_anim](m,cur_anim_t);
         }
         
     }
@@ -38,7 +56,27 @@ class Animation {
 
     addTranslate(x,y,z){
         this.transformations.push(this.translate(x,y,z));
-    }    
+    }
+
+    addSequence(types, args){
+
+        var funcs = [];
+        for (var i=0; i<types.length; i++){
+            switch(types[i]){
+                case "translate":
+                    funcs.push(this.translate(args[i][0],args[i][1], args[i][2]));
+                    break;
+                case "scale":
+                    funcs.push(this.scale(args[i]));
+                    break;
+                default:
+                    console.error('Unknown animation type in addSequence');
+                    break;
+            }
+        }
+
+        this.transformations.push(this.seq(funcs));
+    } 
 
     spikey(i){
 

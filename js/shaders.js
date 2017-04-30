@@ -288,8 +288,10 @@ function runWebGL(){
             sphere = createShape(gl, mesh);
             // TODO remove this at some point
             var anim = new Animation(mesh, sphere);
-            anim.addScale(2.0);
-            anim.addTranslate(0.0,2.0,0.0);
+            anim.addScale(1.4);
+            anim.addSequence(['translate', 'translate','translate', 'translate', 'translate','translate'],
+                [[1, 0, 0], [0,1,0], [-2,0,0],[0,-2,0], [2,0,0],[0,2,0]]);
+            // anim.addTranslate(0.0,2.0,0.0);
             animations.push(anim);
 
             window.requestAnimationFrame(updateWebGl);
