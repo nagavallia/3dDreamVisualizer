@@ -136,7 +136,7 @@ function drawShape(gl, shape, program, xf, texture = null) {
         var colorLocation = gl.getUniformLocation(program, "color");
         gl.uniform3fv(colorLocation, shape.fillColor)
     }
-    
+
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
@@ -145,19 +145,8 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(null);
 }
 
-
-function requestOBJFile(filename){ return new Promise((res, rej) => {
-
-    const request = new XMLHttpRequest();
-    request.open("GET", "data/"+filename, true);
-    request.responseType = "arraybuffer";
-    request.onerror = () => rej("XHR error or something");
-
-    request.onload = () => { res(request.response)};
-    request.send();
-})}
-
 var inc = 0.01;
+
 function updateWebGl(time) {
 
     // TODO replace with values from music
@@ -166,13 +155,13 @@ function updateWebGl(time) {
         inc = -0.01;
     } else if (animation_i < 0.0){
         inc = 0.01;
-    }    
+    }
 
-    animations.forEach(function(elem){
-        elem.apply(animation_i);
-        // TODO might want to update more of the shape buffers, ie color, but 
+    animations.forEach((animation) => {
+        animation.apply(animation_i);
+        // TODO might want to update more of the shape buffers, ie color, but
         // there is no need to rewrite the index buffers every time since those do not change
-        updateShapeVertices(gl, elem.shape, elem.mesh.vertices);
+        updateShapeVertices(gl, animation.aobject.gl_shape, animation.mesh.vertices);
     });
 
     // Draw sky
@@ -193,20 +182,18 @@ function updateWebGl(time) {
     mat4.multiply(xf, perspective, cameraLoc);
     mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
     if (ENABLE_TEXTURES){
-        drawShape(gl, sphere, program, xf, wallTexture);    
+        drawShape(gl, sphere.gl_shape, program, xf, wallTexture);
     } else {
-        drawShape(gl, sphere, program, xf);
+        drawShape(gl, sphere.gl_shape, program, xf);
     }
-    
+
 
     gl.useProgram(null);
     window.requestAnimationFrame(updateWebGl);
 }
 
-
-
-var canvas = $("#webglCanvas")[0]
-var gl = initializeWebGL(canvas);
+const canvas = $("#webglCanvas")[0]
+const gl = initializeWebGL(canvas);
 var program = createGlslProgram(gl, "vertexShader", "fragmentShader");
 var sphere;
 
@@ -216,7 +203,7 @@ var viewDir = vec3.fromValues(0.0,0.0,-1.0);
 var viewUp = vec3.fromValues(0.0,1.0,0.0);
 var camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
 
-//mouse lock stuff
+// mouse lock stuff
 // pointer lock object forking for cross browser
 
 canvas.requestPointerLock = canvas.requestPointerLock ||
@@ -241,7 +228,7 @@ function lockChangeAlert() {
     console.log('The pointer lock status is now locked');
     document.addEventListener("mousemove", rotateCamera, false);
   } else {
-    console.log('The pointer lock status is now unlocked');  
+    console.log('The pointer lock status is now unlocked');
     document.removeEventListener("mousemove", rotateCamera, false);
   }
 }
@@ -251,6 +238,23 @@ var clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 function rotateCamera(e) {
     var xRot = (e.movementX/canvas.width)*2*Math.PI;
     var yRot = (e.movementY/canvas.height)*2*Math.PI;
+}
+
+
+class AObject {
+  constructor (raw_mesh) {
+    const parsed = K3D.parse.fromOBJ(raw_mesh);
+    this.mesh = {
+      vertices : parsed.c_verts,
+      lineInd : [],
+      uvs : parsed.c_uvt,
+      triInd : parsed.i_verts,
+      lineColor : [0.0, 1.0, 1.0],
+      fillColor : [1.0, 0.0, 0.0],
+    }
+    this.original = jQuery.extend(true, {}, this.mesh);
+    this.gl_shape = createShape(gl, this.mesh);
+  }
 }
 
 function runWebGL(){
@@ -276,22 +280,30 @@ function runWebGL(){
 
     requestOBJFile('sphere.obj')
         .then(response => {
+            
+            sphere = new AObject(response)
 
-            var parsed = K3D.parse.fromOBJ(response);
-            mesh.vertices = parsed.c_verts;
-            mesh.lineInd = [];
-            mesh.uvs = parsed.c_uvt;
-            mesh.triInd = parsed.i_verts;
-            mesh.lineColor = [0.0, 1.0, 1.0];
-            mesh.fillColor = [1.0, 0.0, 0.0];
-
-            sphere = createShape(gl, mesh);
             // TODO remove this at some point
-            var anim = new Animation(mesh, sphere);
-            anim.addScale(1.4);
-            anim.addSequence(['translate', 'translate','translate', 'translate', 'translate','translate'],
-                [[1, 0, 0], [0,1,0], [-2,0,0],[0,-2,0], [2,0,0],[0,2,0]]);
-            // anim.addTranslate(0.0,2.0,0.0);
+            var anim = new Animation(sphere);
+
+            anim.addSequence([
+                anim.translate(1,0,0),
+                anim.compose([
+                    anim.translate(-1,0,0),
+                    anim.scale(1, 2),
+                    anim.translate(1, 0, 1)
+                ])
+            ])
+
+            // anim.addSequence([
+            //     anim.translate(1,0,0),
+            //     anim.translate(0,1,0),
+            //     anim.translate(-2,0,0),
+            //     anim.translate(0,-2,0),
+            //     anim.translate(2,0,0),
+            //     anim.translate(0,2,0)
+            // ])
+
             animations.push(anim);
 
             window.requestAnimationFrame(updateWebGl);
@@ -301,11 +313,10 @@ function runWebGL(){
 
 }
 
-var ENABLE_TEXTURES = true;
+const ENABLE_TEXTURES = true;
 
 var animations = [];
 var animation_i = 0.0;
-var mesh = {};
 
 if (ENABLE_TEXTURES){
     var earthImage =  new Image();
@@ -316,3 +327,6 @@ if (ENABLE_TEXTURES){
 } else {
     runWebGL();
 }
+
+
+

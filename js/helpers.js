@@ -21,6 +21,16 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
 })
 
 
+const requestOBJFile = (filename) => new Promise((res, rej) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", "data/"+filename, true);
+    request.responseType = "arraybuffer";
+    request.onerror = () => rej("OBJ XHR error or something");
+    request.onload = () => { res(request.response)};
+    request.send();
+})
+
+
 /* From: https://gist.github.com/gre/1650294
  * Easing Functions - inspired from http://gizma.com/easing/
  * only considering the t value for the range [0, 1] => [0, 1]

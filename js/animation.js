@@ -1,18 +1,16 @@
 class Animation {
-    constructor(mesh, shape) {
-        // the triangle mesh object with vertices, triIndices, etc
-        this.mesh = mesh
-        this.orig = jQuery.extend(true, {}, mesh);
+    constructor(aobject) {
+        this.aobject = aobject
+        
         // the gl shape object returned by createShape
-        this.shape = shape
         this.transformations = [];
         this.sequence_i = 0;
 
         // this scale is weird if the object is not centered..
         // probably want to fix this so that scale behaves similarly
         // at all locations
-        this.scale = (s) => (m, t) => {
-            m.vertices = m.vertices.map((vertex) => vertex * (s * t))
+        this.scale = (start, end) => (m, t) => {
+            m.vertices = m.vertices.map((vertex) => vertex * (((end - start) * t) + start))
             return m
         }
 
@@ -26,26 +24,39 @@ class Animation {
         }
 
         this.seq = (funcs) => (m, t) => {
-            var seq_t = t*funcs.length - 0.0001; // for round off
-            var cur_anim_t = seq_t % 1;
-            var cur_anim = seq_t - cur_anim_t;
+            const seq_t = t*funcs.length - 0.0001; // for round off
+            const cur_anim_t = seq_t % 1;
+            const cur_anim = seq_t - cur_anim_t;
 
-            // apply finished functions
-            for (var i=0; i<cur_anim; i++){
-                funcs[i](m,1);
-            }
+            // console.log(cur_anim, t, funcs)
+
+
+            // // apply finished functions
+            // for (var i=0; i<cur_anim; i++){
+            //     funcs[i](m,1);
+            // }
+
+            m = funcs.slice(0, cur_anim).reduce((m, f) => f(m, 1), m)
 
             // partially apply current anim
             return funcs[cur_anim](m,cur_anim_t);
         }
+
+        this.compose = (funcs) => (m, t) => {
+            return funcs.reduce((m, f) => f(m, t), m)
+        }
         
     }
 
+    addCompose(funcs) {
+        this.transformations.push(this.compose(funcs))
+    }
+
     apply(i){
-        this.mesh = jQuery.extend(true, {}, this.orig);
+        this.mesh = jQuery.extend(true, {}, this.aobject.original);
         var self = this;
 
-        this.transformations.forEach(function(elem){
+        this.transformations.forEach(function (elem){
             elem(self.mesh, i);
         });
     }
@@ -58,25 +69,9 @@ class Animation {
         this.transformations.push(this.translate(x,y,z));
     }
 
-    addSequence(types, args){
-
-        var funcs = [];
-        for (var i=0; i<types.length; i++){
-            switch(types[i]){
-                case "translate":
-                    funcs.push(this.translate(args[i][0],args[i][1], args[i][2]));
-                    break;
-                case "scale":
-                    funcs.push(this.scale(args[i]));
-                    break;
-                default:
-                    console.error('Unknown animation type in addSequence');
-                    break;
-            }
-        }
-
-        this.transformations.push(this.seq(funcs));
-    } 
+    addSequence(sequence){
+        this.transformations.push(this.seq(sequence))
+    }
 
     spikey(i){
 
