@@ -1,11 +1,12 @@
-function initializeWebGL(canvas) {
+const ENABLE_TEXTURES = true;
+const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
+var program;
 
+function initializeWebGL(canvas) {
     var gl = null;
     try {
-        gl = canvas.getContext("experimental-webgl");
-        if (!gl) {
-            gl = canvas.getContext("webgl");
-        }
+        gl = canvas.getContext("experimental-webgl")
+          || canvas.getContext("webgl")
     } catch (error) { console.error(error) }
     if (!gl) {
         alert("Could not get WebGL context!");
@@ -47,6 +48,7 @@ function pointerSetup(canvas) {
 
 }
 
+
 function createShader(gl, shaderScriptId) {
     var shaderScript = $("#" + shaderScriptId);
     var shaderSource = shaderScript[0].text;
@@ -58,7 +60,7 @@ function createShader(gl, shaderScriptId) {
     } else {
         throw new Error("Invalid shader type: " + shaderScript[0].type)
     }
-    var shader = gl.createShader(shaderType);
+    const shader = gl.createShader(shaderType);
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
@@ -70,8 +72,9 @@ function createShader(gl, shaderScriptId) {
     }
 }
 
+
 function createGlslProgram(gl, vertexShaderId, fragmentShaderId) {
-    var program = gl.createProgram();
+    const program = gl.createProgram();
     gl.attachShader(program, createShader(gl, vertexShaderId));
     gl.attachShader(program, createShader(gl, fragmentShaderId));
     gl.linkProgram(program);
@@ -156,29 +159,21 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(null);
 }
 
-var inc = 0.01;
 
-function updateWebGl(time) {
+function updateVisualizer(viz, time) {
 
-    // TODO replace with values from music
-    animation_i += inc;
-    if (animation_i > 1.0){
-        inc = -0.01;
-    } else if (animation_i < 0.0){
-        inc = 0.01;
-    }
-
-    objects.forEach(object => {
+    viz.objects.forEach(object => {
         if (!object.animation) return;
-        object.animation.apply(animation_i)
-        updateShapeVertices(gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
+        object.animation.update()
+        updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     })
 
     // Draw sky
-    gl.clearColor(0.6, 0.6, 1.0, 0.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    viz.gl.clearColor(0.6, 0.6, 1.0, 0.0);
+    viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(program);
+    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
+    viz.gl.useProgram(program);
 
     var perspective = mat4.create();
     mat4.perspective(perspective, 70.0, 800.0 / 600.0, 0.1, 100.0);
@@ -192,102 +187,43 @@ function updateWebGl(time) {
     mat4.multiply(xf, perspective, cameraLoc);
     mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
 
-    for (var i = 0; i < objects.length; i++) {
+    for (var i = 0; i < viz.objects.length; i++) {
         if (ENABLE_TEXTURES){
-            drawShape(gl, objects[i].gl_shape, program, xf, wallTexture);
+            drawShape(viz.gl, viz.objects[i].gl_shape, program, xf, wallTexture);
         } else {
-            drawShape(gl, objects[i].gl_shape, program, xf);
+            drawShape(viz.gl, viz.objects[i].gl_shape, program, xf);
         }
     };
 
-    gl.useProgram(null);
-    window.requestAnimationFrame(updateWebGl);
+    viz.gl.useProgram(null);
 }
 
-const ENABLE_TEXTURES = true;
-const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
-const canvas = $("#webglCanvas")[0]
-const gl = initializeWebGL(canvas);
-pointerSetup(canvas)
-const program = createGlslProgram(gl, "vertexShader", "fragmentShader");
-const objects = []
+/**
+ * @return a Promise that resolves once
+ * the vizualizer has been initialized
+ */
+const initVisualizer = (viz) => {
+    
+    viz.gl.depthFunc(viz.gl.LESS);
+    viz.gl.enable(viz.gl.DEPTH_TEST);
 
-let animation_i = 0.0;
-
-//initialize camera
-const viewPoint = vec3.fromValues(0.0,0.0,1.0);
-const viewDir = vec3.fromValues(0.0,0.0,-1.0);
-const viewUp = vec3.fromValues(0.0,1.0,0.0);
-const camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
-
-
-
-function runWebGL(){
-
-    gl.depthFunc(gl.LESS);
-    gl.enable(gl.DEPTH_TEST);
-
+    // Bind the texture
     if (ENABLE_TEXTURES){
         // Step 1: Create the texture object.
-        wallTexture = gl.createTexture();
+        wallTexture = viz.gl.createTexture();
         // Step 2: Bind the texture object to the "target" TEXTURE_2D
-        gl.bindTexture(gl.TEXTURE_2D, wallTexture);
+        viz.gl.bindTexture(viz.gl.TEXTURE_2D, wallTexture);
         // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
         //         so that we don't have to deal with flipping the y-coordinate.
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        viz.gl.pixelStorei(viz.gl.UNPACK_FLIP_Y_WEBGL, true);
         // Step 4: Download the image data to the GPU.
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, earthImage);
+        viz.gl.texImage2D(viz.gl.TEXTURE_2D, 0, viz.gl.RGBA, viz.gl.RGBA, viz.gl.UNSIGNED_BYTE, viz.earthImage);
         // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
-        gl.generateMipmap(gl.TEXTURE_2D);
+        viz.gl.generateMipmap(viz.gl.TEXTURE_2D);
         // Step 6: Clean up.  Tell WebGL that we are done with the target.
-        gl.bindTexture(gl.TEXTURE_2D, null);
+        viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
     }
 
-    requestOBJFile('sphere.obj')
-        .then(response => {
-            
-            sphere = new AObject(response)
-    
-            // TODO remove this at some point
-            sphere.animation = new Animation(sphere);
-            anim = sphere.animation
-            anim.addSequence([
-                anim.translate(1,0,0),
-                anim.compose([
-                    anim.translate(-1,0,0),
-                    anim.scale(1,2),
-                    anim.translate(1, 0, 1)
-                ])
-            ])
-    
-            // anim.addSequence([
-            //     anim.translate(1,0,0),
-            //     anim.translate(0,1,0),
-            //     anim.translate(-2,0,0),
-            //     anim.translate(0,-2,0),
-            //     anim.translate(2,0,0),
-            //     anim.translate(0,2,0)
-            // ])
-    
-            // animations.push(anim);
-            objects.push(sphere)
-    
-            window.requestAnimationFrame(updateWebGl);
-    
-        })
-        .catch(err => console.error(err))
-
 }
-
-if (ENABLE_TEXTURES){
-    var earthImage =  new Image();
-    earthImage.onload = function() {
-        runWebGL();
-    };
-    earthImage.src = "data/earth.png";
-} else {
-    runWebGL();
-}
-
 
 

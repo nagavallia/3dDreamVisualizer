@@ -12,17 +12,16 @@ if (!context.createDelay)
 if (!context.createScriptProcessor)
   context.createScriptProcessor = context.createJavaScriptNode;
 
-// const freqcanv = document.getElementById('freqcanvas')
-// const playbutton = document.getElementById('playbutton')
+const playbutton = document.getElementById('playbutton')
 
-loadAudio(context, 'songs/shooting_stars.mp3')
-.then(buffer => {
-  const vizsample = new VisualizerSample(freqcanvas, buffer);
+/** Create and start the visualizer */
+const visualizer = new SteveMarschnersDreamVisualizer($("#webglCanvas")[0])
+
+visualizer
+.init()
+.then(() => {
   playbutton.removeAttribute('disabled')
   playbutton.innerHTML = 'Play/pause'
-
-  playbutton.addEventListener('click', () => { vizsample.togglePlayback() });
-
+  playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
 })
 .catch(console.error)
-
