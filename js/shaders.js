@@ -21,19 +21,64 @@ class Camera {
     }
 }
 
-function initializeWebGL(canvas) {
-        var gl = null;
-        try {
-            gl = canvas.getContext("experimental-webgl");
-            if (!gl) {
-                gl = canvas.getContext("webgl");
-            }
-        } catch (error) { console.error(error) }
+
+class AObject {
+  constructor (raw_mesh) {
+    const parsed = K3D.parse.fromOBJ(raw_mesh);
+    this.mesh = {
+      vertices : parsed.c_verts,
+      lineInd : [],
+      uvs : parsed.c_uvt,
+      triInd : parsed.i_verts,
+      lineColor : [0.0, 1.0, 1.0],
+      fillColor : [1.0, 0.0, 0.0],
+    }
+    this.original = jQuery.extend(true, {}, this.mesh);
+    this.gl_shape = createShape(gl, this.mesh);
+    this.animation = null
+  }
+}
+
+function initializeWebGL(selector) {
+
+    const canvas = $(selector)[0]
+
+    // mouse lock stuff
+    canvas.requestPointerLock = canvas.requestPointerLock ||
+                                canvas.mozRequestPointerLock;
+    document.exitPointerLock = document.exitPointerLock ||
+                               document.mozExitPointerLock;
+
+    canvas.onclick = () => canvas.requestPointerLock()
+
+    const lockChangeAlert = () => {
+      if (document.pointerLockElement === canvas ||
+          document.mozPointerLockElement === canvas) {
+        console.log('The pointer lock status is now locked');
+        document.addEventListener("mousemove", rotateCamera, false);
+      } else {
+        console.log('The pointer lock status is now unlocked');
+        document.removeEventListener("mousemove", rotateCamera, false);
+      }
+    }
+
+    // pointer lock event listeners
+    // Hook pointer lock state change events for different browsers
+    document.addEventListener('pointerlockchange', lockChangeAlert, false);
+    document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
+
+    var gl = null;
+    try {
+        gl = canvas.getContext("experimental-webgl");
         if (!gl) {
-            alert("Could not get WebGL context!");
-            throw new Error("Could not get WebGL context!");
+            gl = canvas.getContext("webgl");
         }
-        return gl;
+    } catch (error) { console.error(error) }
+    if (!gl) {
+        alert("Could not get WebGL context!");
+        throw new Error("Could not get WebGL context!");
+    }
+    return gl;
 }
 
 function createShader(gl, shaderScriptId) {
@@ -157,12 +202,19 @@ function updateWebGl(time) {
         inc = 0.01;
     }
 
-    animations.forEach((animation) => {
-        animation.apply(animation_i);
-        // TODO might want to update more of the shape buffers, ie color, but
-        // there is no need to rewrite the index buffers every time since those do not change
-        updateShapeVertices(gl, animation.aobject.gl_shape, animation.mesh.vertices);
-    });
+    objects.forEach(object => {
+        if (!object.animation) return;
+        object.animation.apply(animation_i)
+        updateShapeVertices(gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
+    })
+
+
+    // animations.forEach((animation) => {
+    //     animation.apply(animation_i);
+    //     // TODO might want to update more of the shape buffers, ie color, but
+    //     // there is no need to rewrite the index buffers every time since those do not change
+    //     updateShapeVertices(gl, animation.aobject.gl_shape, animation.mesh.vertices);
+    // });
 
     // Draw sky
     gl.clearColor(0.6, 0.6, 1.0, 0.0);
@@ -181,57 +233,31 @@ function updateWebGl(time) {
     var xf = mat4.create();
     mat4.multiply(xf, perspective, cameraLoc);
     mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
-    if (ENABLE_TEXTURES){
-        drawShape(gl, sphere.gl_shape, program, xf, wallTexture);
-    } else {
-        drawShape(gl, sphere.gl_shape, program, xf);
-    }
 
+    for (var i = 0; i < objects.length; i++) {
+        if (ENABLE_TEXTURES){
+            drawShape(gl, objects[i].gl_shape, program, xf, wallTexture);
+        } else {
+            drawShape(gl, objects[i].gl_shape, program, xf);
+        }
+    };
 
     gl.useProgram(null);
     window.requestAnimationFrame(updateWebGl);
 }
 
-const canvas = $("#webglCanvas")[0]
-const gl = initializeWebGL(canvas);
-var program = createGlslProgram(gl, "vertexShader", "fragmentShader");
-var sphere;
+const ENABLE_TEXTURES = true;
+const gl = initializeWebGL("#webglCanvas");
+const program = createGlslProgram(gl, "vertexShader", "fragmentShader");
+const objects = []
+
+let animation_i = 0.0;
 
 //initialize camera
-var viewPoint = vec3.fromValues(0.0,0.0,1.0);
-var viewDir = vec3.fromValues(0.0,0.0,-1.0);
-var viewUp = vec3.fromValues(0.0,1.0,0.0);
-var camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
-
-// mouse lock stuff
-// pointer lock object forking for cross browser
-
-canvas.requestPointerLock = canvas.requestPointerLock ||
-                            canvas.mozRequestPointerLock;
-
-document.exitPointerLock = document.exitPointerLock ||
-                           document.mozExitPointerLock;
-
-canvas.onclick = function() {
-  canvas.requestPointerLock();
-};
-
-// pointer lock event listeners
-
-// Hook pointer lock state change events for different browsers
-document.addEventListener('pointerlockchange', lockChangeAlert, false);
-document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-
-function lockChangeAlert() {
-  if (document.pointerLockElement === canvas ||
-      document.mozPointerLockElement === canvas) {
-    console.log('The pointer lock status is now locked');
-    document.addEventListener("mousemove", rotateCamera, false);
-  } else {
-    console.log('The pointer lock status is now unlocked');
-    document.removeEventListener("mousemove", rotateCamera, false);
-  }
-}
+const viewPoint = vec3.fromValues(0.0,0.0,1.0);
+const viewDir = vec3.fromValues(0.0,0.0,-1.0);
+const viewUp = vec3.fromValues(0.0,1.0,0.0);
+const camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
 
 var clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 
@@ -241,21 +267,6 @@ function rotateCamera(e) {
 }
 
 
-class AObject {
-  constructor (raw_mesh) {
-    const parsed = K3D.parse.fromOBJ(raw_mesh);
-    this.mesh = {
-      vertices : parsed.c_verts,
-      lineInd : [],
-      uvs : parsed.c_uvt,
-      triInd : parsed.i_verts,
-      lineColor : [0.0, 1.0, 1.0],
-      fillColor : [1.0, 0.0, 0.0],
-    }
-    this.original = jQuery.extend(true, {}, this.mesh);
-    this.gl_shape = createShape(gl, this.mesh);
-  }
-}
 
 function runWebGL(){
 
@@ -284,13 +295,13 @@ function runWebGL(){
             sphere = new AObject(response)
 
             // TODO remove this at some point
-            var anim = new Animation(sphere);
-
+            sphere.animation = new Animation(sphere);
+            anim = sphere.animation
             anim.addSequence([
                 anim.translate(1,0,0),
                 anim.compose([
                     anim.translate(-1,0,0),
-                    anim.scale(1, 2),
+                    anim.scale(1,2),
                     anim.translate(1, 0, 1)
                 ])
             ])
@@ -304,7 +315,8 @@ function runWebGL(){
             //     anim.translate(0,2,0)
             // ])
 
-            animations.push(anim);
+            // animations.push(anim);
+            objects.push(sphere)
 
             window.requestAnimationFrame(updateWebGl);
 
@@ -312,11 +324,6 @@ function runWebGL(){
         .catch(err => console.error(err))
 
 }
-
-const ENABLE_TEXTURES = true;
-
-var animations = [];
-var animation_i = 0.0;
 
 if (ENABLE_TEXTURES){
     var earthImage =  new Image();

@@ -90,4 +90,8 @@ class Animation {
     _interpolate(min, max, i){
         return (1-i)*min + i*max;
     }
+
+    update() {
+        
+    }
 }
