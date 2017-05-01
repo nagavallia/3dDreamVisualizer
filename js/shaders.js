@@ -1,48 +1,20 @@
-class Camera {
-    constructor(viewPoint, viewDir, viewUp, projD) {
-        this.viewPoint = viewPoint;
-        this.viewDir = viewDir;
-        this.viewUp = viewUp;
-        this.projD = projD;
-        this.viewWidth = 1.0;
-        this.viewHeight = 1.0;
+function initializeWebGL(canvas) {
 
-        //create w basis vector
-        this.basisW = vec3.clone(this.viewDir);
-        vec3.normalize(this.basisW,vec3.negate(this.basisW, this.basisW));
-
-        //create u basis vector
-        this.basisU = vec3.clone(this.viewUp);
-        vec3.normalize(this.basisU, vec3.cross(this.basisU, this.basisU, this.basisW));
-
-        //create v basis vector
-        this.basisV = vec3.clone(this.basisW);
-        vec3.normalize(this.basisV, vec3.cross(this.basisV, this.basisW, this.basisU));
+    var gl = null;
+    try {
+        gl = canvas.getContext("experimental-webgl");
+        if (!gl) {
+            gl = canvas.getContext("webgl");
+        }
+    } catch (error) { console.error(error) }
+    if (!gl) {
+        alert("Could not get WebGL context!");
+        throw new Error("Could not get WebGL context!");
     }
+    return gl;
 }
 
-
-class AObject {
-  constructor (raw_mesh) {
-    const parsed = K3D.parse.fromOBJ(raw_mesh);
-    this.mesh = {
-      vertices : parsed.c_verts,
-      lineInd : [],
-      uvs : parsed.c_uvt,
-      triInd : parsed.i_verts,
-      lineColor : [0.0, 1.0, 1.0],
-      fillColor : [1.0, 0.0, 0.0],
-    }
-    this.original = jQuery.extend(true, {}, this.mesh);
-    this.gl_shape = createShape(gl, this.mesh);
-    this.animation = null
-  }
-}
-
-function initializeWebGL(selector) {
-
-    const canvas = $(selector)[0]
-
+function pointerSetup(canvas) {
     // mouse lock stuff
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
@@ -50,6 +22,12 @@ function initializeWebGL(selector) {
                                document.mozExitPointerLock;
 
     canvas.onclick = () => canvas.requestPointerLock()
+
+
+    const rotateCamera = (e) => {
+        var xRot = (e.movementX/canvas.width)*2*Math.PI;
+        var yRot = (e.movementY/canvas.height)*2*Math.PI;
+    }
 
     const lockChangeAlert = () => {
       if (document.pointerLockElement === canvas ||
@@ -67,18 +45,6 @@ function initializeWebGL(selector) {
     document.addEventListener('pointerlockchange', lockChangeAlert, false);
     document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
 
-    var gl = null;
-    try {
-        gl = canvas.getContext("experimental-webgl");
-        if (!gl) {
-            gl = canvas.getContext("webgl");
-        }
-    } catch (error) { console.error(error) }
-    if (!gl) {
-        alert("Could not get WebGL context!");
-        throw new Error("Could not get WebGL context!");
-    }
-    return gl;
 }
 
 function createShader(gl, shaderScriptId) {
@@ -208,14 +174,6 @@ function updateWebGl(time) {
         updateShapeVertices(gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     })
 
-
-    // animations.forEach((animation) => {
-    //     animation.apply(animation_i);
-    //     // TODO might want to update more of the shape buffers, ie color, but
-    //     // there is no need to rewrite the index buffers every time since those do not change
-    //     updateShapeVertices(gl, animation.aobject.gl_shape, animation.mesh.vertices);
-    // });
-
     // Draw sky
     gl.clearColor(0.6, 0.6, 1.0, 0.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -247,7 +205,10 @@ function updateWebGl(time) {
 }
 
 const ENABLE_TEXTURES = true;
-const gl = initializeWebGL("#webglCanvas");
+const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
+const canvas = $("#webglCanvas")[0]
+const gl = initializeWebGL(canvas);
+pointerSetup(canvas)
 const program = createGlslProgram(gl, "vertexShader", "fragmentShader");
 const objects = []
 
@@ -258,13 +219,6 @@ const viewPoint = vec3.fromValues(0.0,0.0,1.0);
 const viewDir = vec3.fromValues(0.0,0.0,-1.0);
 const viewUp = vec3.fromValues(0.0,1.0,0.0);
 const camera = new Camera(viewPoint, viewDir, viewUp, 1.0);
-
-var clientRect = $("#webglCanvas")[0].getBoundingClientRect();
-
-function rotateCamera(e) {
-    var xRot = (e.movementX/canvas.width)*2*Math.PI;
-    var yRot = (e.movementY/canvas.height)*2*Math.PI;
-}
 
 
 
@@ -293,7 +247,7 @@ function runWebGL(){
         .then(response => {
             
             sphere = new AObject(response)
-
+    
             // TODO remove this at some point
             sphere.animation = new Animation(sphere);
             anim = sphere.animation
@@ -305,7 +259,7 @@ function runWebGL(){
                     anim.translate(1, 0, 1)
                 ])
             ])
-
+    
             // anim.addSequence([
             //     anim.translate(1,0,0),
             //     anim.translate(0,1,0),
@@ -314,13 +268,13 @@ function runWebGL(){
             //     anim.translate(2,0,0),
             //     anim.translate(0,2,0)
             // ])
-
+    
             // animations.push(anim);
             objects.push(sphere)
-
+    
             window.requestAnimationFrame(updateWebGl);
-
-    })
+    
+        })
         .catch(err => console.error(err))
 
 }
