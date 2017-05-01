@@ -1,5 +1,31 @@
 
 /**
+ * Loads things into a target object
+ */
+class ResourceLoader {
+  constructor (target) { this.target = target || this }
+
+  loadAudio(name, path, context) {
+    return loadAudio(context, path)                // loads audio
+      .then(buffer => this.target[name] = buffer)  // saves it
+      .then(() => this)                            // good for chaining requests
+  }
+
+  load3DObj(name, path) {
+    return requestOBJFile(path)
+      .then(buffer => this.target[name] = buffer)
+      .then(() => this)
+  }
+
+  loadImage(name, path) {
+    return loadImage(path)
+      .then(image => this.target[name] = image)
+      .then(() => this)
+  }
+}
+
+
+/**
  * Loads an audio file to an audio context
  */
 const loadAudio = (context, path) => new Promise((res, rej) => {
@@ -18,6 +44,24 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
       error => rej(error)
   );
   request.send();
+})
+
+
+const requestOBJFile = (filename) => new Promise((res, rej) => {
+    const request = new XMLHttpRequest();
+    request.open("GET", "data/"+filename, true);
+    request.responseType = "arraybuffer";
+    request.onerror = () => rej("OBJ XHR error or something");
+    request.onload = () => { res(request.response)};
+    request.send();
+})
+
+
+const loadImage = (url) => new Promise((res, rej) => {
+    const img = new Image();
+    img.src = url
+    img.onload = () => res(img)
+    img.onerror = () => rej("couldn't load image!")
 })
 
 
