@@ -1,3 +1,5 @@
+
+
 class Camera {
   constructor(viewPoint, viewDir, viewUp, projD) {
       this.viewPoint = viewPoint;
@@ -22,19 +24,24 @@ class Camera {
 }
 
 class AObject {
-  constructor (gl, raw_mesh, textureImg) {
+  constructor (gl, raw_mesh, color = {}) {
+    this.texture = color.texture || null
     const parsed = K3D.parse.fromOBJ(raw_mesh);
     this.mesh = {
       vertices : parsed.c_verts,
       lineInd : [],
       uvs : parsed.c_uvt,
       triInd : parsed.i_verts,
-      lineColor : [0.0, 1.0, 1.0],
-      fillColor : [1.0, 0.0, 0.0],
+      lineColor : color.lineColor || [0.0, 1.0, 1.0],
+      fillColor : color.fillColor || [1.0, 0.0, 0.0],
     }
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);
     this.animation = null
-    this.texture = textureImg
   }
+
+  /**
+   * Mutably transforms this object's mesh with a transformation function
+   */
+  transform (func) { func(this.mesh); this.original = jQuery.extend(true, {}, this.mesh); }
 }

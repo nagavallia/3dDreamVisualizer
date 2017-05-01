@@ -17,6 +17,7 @@ class SteveMarschnersDreamVisualizer {
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
     this.animation_i = 0.0;
+    this.clearColor = [0.1176, 0.1176, 0.1255]
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,1.0);
@@ -36,8 +37,8 @@ class SteveMarschnersDreamVisualizer {
   init() {
 
     // functions [0,1] for animating to different things
-    const iKick = () => this.bandan.getFrequencyValue(22)
-    const iHigh = () => this.bandan.getFrequencyValue(18000)
+    const iKick = () => this.bandan.getFrequencyValue(22, ease.inCubic)
+    const iHigh = () => this.bandan.getFrequencyValue(18000, ease.outQuart)
     const iTime = () => this.animation_i
 
     return Promise.resolve(new ResourceLoader(this))
@@ -49,9 +50,23 @@ class SteveMarschnersDreamVisualizer {
       // things have been loaded 
       .then(_ => {
 
+        const color1 = {
+          texture: this.earthImage,
+          fillColor: [0.8510, 0.7961, 0.6196],
+        }
+
+        const color2 = {
+          fillColor: [0.8627, 0.2078, 0.1333],
+        }
+
+        const color3 = {
+          fillColor: [0.2157, 0.2549, 0.2510],
+        }
+
         /** One sphere */
-        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
-        kick_sphere.animation = new Animation(kick_sphere, iHigh);
+        const kick_sphere = new AObject(this.gl, this.sphere_obj, color3)
+        kick_sphere.transform(transform.translate(-1,0,0))
+        kick_sphere.animation = new Animation(kick_sphere, iKick);
         kick_sphere.animation.addSequence([
             anim.translate(1,0,0),
             anim.compose([
@@ -63,20 +78,21 @@ class SteveMarschnersDreamVisualizer {
         this.objects.push(kick_sphere)
 
         /** Another sphere */
-        const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
+        const high_sphere = new AObject(this.gl, this.sphere_obj, color2)
         high_sphere.animation = new Animation(high_sphere, iKick);
         high_sphere.animation.addSequence([
             anim.compose([
                 anim.translate(-1,0,0),
                 anim.scale(0.2,1),
                 anim.translate(1, 0, 1)
-            ])
+            ]),
+            anim.translate(5,0,0),
+
         ])
         this.objects.push(high_sphere)
 
-
         /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage)
+        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, color1)
         kick_sphere2.animation = new Animation(kick_sphere2, iKick);
         kick_sphere2.animation.addSequence([
           anim.translate(1,0,0),

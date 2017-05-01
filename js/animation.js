@@ -1,8 +1,20 @@
+const transform = {
+  /** Scales an object */
+  scale : s => m => Object.assign(m, {
+    vertices: m.vertices.map(v => v*s)
+  }),
+  
+  /** Translates an object */
+  translate : (x, y, z) => m => Object.assign(m, {
+    vertices: m.vertices.map((v, i) => {
+      switch (i%3) {
+        case 0: return v + x
+        case 1: return v + y
+        case 2: return v + z
+  }})}),
 
-/* From: https://gist.github.com/gre/1650294
- * Easing Functions - inspired from http://gizma.com/easing/
- * only considering the t value for the range [0, 1] => [0, 1]
- */
+}
+
 const anim = {
   /** animates between an object as scale start, and at scale end */
   scale : (start, end) => (m, t) => {
@@ -100,10 +112,10 @@ class Animation {
     }
 
     update() {
-
-        this.mesh = jQuery.extend(true, {}, this.aobject.original);
-        this.transformations.forEach((elem) => {
-            elem(this.mesh, this.get_i());
-        });
+        this.mesh = jQuery.extend(true, {}, this.aobject.original); // this is slow
+        const len = this.transformations.length; // small performance hack
+        for (let i = 0; i < len; i++) {
+          this.transformations[i](this.mesh, this.get_i());
+        };
     }
 }

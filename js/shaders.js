@@ -1,4 +1,4 @@
-const ENABLE_TEXTURES = true;
+const ENABLE_TEXTURES = false;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 var program;
 
@@ -23,7 +23,6 @@ function pointerSetup(canvas) {
                                document.mozExitPointerLock;
 
     canvas.onclick = () => canvas.requestPointerLock()
-
 
     const rotateCamera = (e) => {
         var xRot = (e.movementX/canvas.width)*2*Math.PI;
@@ -159,20 +158,26 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(null);
 }
 
-
 function updateVisualizer(viz, time) {
 
-    viz.objects.forEach(object => {
-        if (!object.animation) return;
+    // viz.objects.forEach(object => {
+       
+    // })
+
+    for (var i = 0; i < viz.objects.length; i++) {
+        let object = viz.objects[i]
+        if (!object.animation) continue;
         object.animation.update()
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
-    })
+    };
+
+
 
     // Draw sky
-    viz.gl.clearColor(0.6, 0.6, 1.0, 0.0);
+    viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
 
-    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
+    
     viz.gl.useProgram(program);
 
     var perspective = mat4.create();
@@ -206,6 +211,8 @@ const initVisualizer = (viz) => {
     
     viz.gl.depthFunc(viz.gl.LESS);
     viz.gl.enable(viz.gl.DEPTH_TEST);
+
+    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
 
     // Bind the texture
     if (ENABLE_TEXTURES){
