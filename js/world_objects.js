@@ -22,7 +22,7 @@ class Camera {
 }
 
 class AObject {
-  constructor (gl, raw_mesh, textureImg) {
+  constructor (gl, raw_mesh, textureImg, color = [1.0, 0.0, 0.0]) {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
     this.mesh = {
       vertices : parsed.c_verts,
@@ -30,7 +30,7 @@ class AObject {
       uvs : parsed.c_uvt,
       triInd : parsed.i_verts,
       lineColor : [0.0, 1.0, 1.0],
-      fillColor : [1.0, 0.0, 0.0],
+      fillColor : color,
     }
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);

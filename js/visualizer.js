@@ -42,7 +42,8 @@ class SteveMarschnersDreamVisualizer {
 
     return Promise.resolve(new ResourceLoader(this))
       // audio buffer needs to be loaded to 'audio', also load meshes and textures
-      .then(loader => loader.loadAudio('audio', '../songs/shooting_stars.mp3', context))
+      .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
+      // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
       .then(loader => loader.loadImage('earthImage', 'data/earth.png'))
       .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
       
@@ -52,31 +53,54 @@ class SteveMarschnersDreamVisualizer {
         /** One sphere */
         const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
         kick_sphere.animation = new Animation(kick_sphere, iHigh);
+        // for spikes
+        var amts = Array.apply(null, {length: kick_sphere.mesh.vertices.length}).map(_ => Math.random(0.5, 1));
         kick_sphere.animation.addSequence([
-            anim.translate(1,0,0),
+            anim.translate(0.75,0.25,0),
             anim.compose([
-                anim.translate(-1,0,0),
-                anim.scale(1,2),
-                anim.translate(1, 0, 1)
-            ])
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
         ])
         this.objects.push(kick_sphere)
 
         /** Another sphere */
-        const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
+        const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
         high_sphere.animation = new Animation(high_sphere, iKick);
         high_sphere.animation.addSequence([
+            anim.translate(-1,1,0),
             anim.compose([
-                anim.translate(-1,0,0),
+                anim.translate(1,-1,0),
                 anim.scale(0.2,1),
-                anim.translate(1, 0, 1)
+                anim.translate(-1,1, 0)
             ])
         ])
         this.objects.push(high_sphere)
 
 
         /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage)
+        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1])
         kick_sphere2.animation = new Animation(kick_sphere2, iKick);
         kick_sphere2.animation.addSequence([
           anim.translate(1,0,0),

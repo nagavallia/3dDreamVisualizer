@@ -1,6 +1,5 @@
 
-/* From: https://gist.github.com/gre/1650294
- * Easing Functions - inspired from http://gizma.com/easing/
+/*
  * only considering the t value for the range [0, 1] => [0, 1]
  */
 const anim = {
@@ -29,6 +28,17 @@ const anim = {
     m = funcs.slice(0, cur_anim).reduce((m, f) => f(m, 1), m)
     // partially apply current anim
     return funcs[cur_anim](m,cur_anim_t);
+  },
+
+  waves : (min, max) => (m, t) => {
+    const amts = Array.apply(null, {length: m.vertices.length}).map(_ => Math.random(min,max));
+    m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + min));
+    return m;
+  },
+
+  spikes : (amts) => (m, t) => {
+    m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + 1));
+    return m;
   },
 
   /** Creates an animation from multiple concurrent animations */
