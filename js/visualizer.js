@@ -17,7 +17,7 @@ class SteveMarschnersDreamVisualizer {
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
     this.animation_i = 0.0;
-    this.clearColor = [0.1176, 0.1176, 0.1255]
+    this.clearColor = [0.6, 0.6, 1.0, 0.0]
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,1.0);
@@ -25,7 +25,7 @@ class SteveMarschnersDreamVisualizer {
     this.viewUp = vec3.fromValues(0.0,1.0,0.0);
     this.camera = new Camera(this.viewPoint, this.viewDir, this.viewUp, 1.0);
 
-    pointerSetup(this.canvas)
+    pointerSetup(this.gl, this.canvas)
 
   }
 
@@ -37,13 +37,16 @@ class SteveMarschnersDreamVisualizer {
   init() {
 
     // functions [0,1] for animating to different things
-    const iKick = () => this.bandan.getFrequencyValue(22, ease.inCubic)
-    const iHigh = () => this.bandan.getFrequencyValue(18000, ease.outQuart)
+    // const iKick = () => this.bandan.getFrequencyValue(22, ease.inCubic)
+    // const iHigh = () => this.bandan.getFrequencyValue(18000, ease.outQuart)
+    const iKick = () => this.bandan.getFrequencyValue(22)
+    const iHigh = () => this.bandan.getFrequencyValue(18000)
     const iTime = () => this.animation_i
 
     return Promise.resolve(new ResourceLoader(this))
       // audio buffer needs to be loaded to 'audio', also load meshes and textures
-      .then(loader => loader.loadAudio('audio', '../songs/shooting_stars.mp3', context))
+      .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
+      // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
       .then(loader => loader.loadImage('earthImage', 'data/earth.png'))
       .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
       
@@ -64,35 +67,54 @@ class SteveMarschnersDreamVisualizer {
         }
 
         /** One sphere */
-        const kick_sphere = new AObject(this.gl, this.sphere_obj, color3)
-        kick_sphere.transform(transform.translate(-1,0,0))
-        kick_sphere.animation = new Animation(kick_sphere, iKick);
+        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,0,0], [1,0,0])
+        // kick_sphere.transform(transform.translate(-1,0,0))
+        kick_sphere.animation = new Animation(kick_sphere, iHigh);
         kick_sphere.animation.addSequence([
-            anim.translate(1,0,0),
+            anim.translate(0.75,0.25,0),
             anim.compose([
-                anim.translate(-1,0,0),
-                anim.scale(1,2),
-                anim.translate(1, 0, 1)
-            ])
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
+            anim.compose([
+                anim.translate(-0.75,-0.25,0),
+                anim.waves(1,2),
+                anim.translate(0.75, 0.25, 0)
+            ]),
         ])
         this.objects.push(kick_sphere)
 
         /** Another sphere */
-        const high_sphere = new AObject(this.gl, this.sphere_obj, color2)
+        const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
         high_sphere.animation = new Animation(high_sphere, iKick);
         high_sphere.animation.addSequence([
+            anim.translate(-1,1,0),
             anim.compose([
-                anim.translate(-1,0,0),
-                anim.scale(0.2,1),
-                anim.translate(1, 0, 1)
-            ]),
-            anim.translate(5,0,0),
-
+                anim.translate(1,-1,0),
+                anim.spikes2(1,2.5),
+                anim.translate(-1,1, 0)
+            ])
         ])
         this.objects.push(high_sphere)
 
         /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, color1)
+        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [0.5,0.5,1])
         kick_sphere2.animation = new Animation(kick_sphere2, iKick);
         kick_sphere2.animation.addSequence([
           anim.translate(1,0,0),
@@ -132,12 +154,10 @@ class SteveMarschnersDreamVisualizer {
       // Stop playback and save the position of the playhead
       this.source.stop(0);
       this.startOffset += context.currentTime - this.startTime;
-      console.log('paused at', this.startOffset);
 
     } else {
       this.source = context.createBufferSource();
       this.startTime = context.currentTime;
-      console.log('started at', this.startOffset);
 
       // Connect graph
       this.source.buffer = this.audio;

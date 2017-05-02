@@ -1,4 +1,3 @@
-
 const transform = {
   /** Scales an object */
   scale : s => m => Object.assign(m, {
@@ -16,6 +15,9 @@ const transform = {
 
 }
 
+/*
+ * only considering the t value for the range [0, 1] => [0, 1]
+ */
 const anim = {
   /** animates between an object as scale start, and at scale end */
   scale : (start, end) => (m, t) => {
@@ -42,6 +44,42 @@ const anim = {
     m = funcs.slice(0, cur_anim).reduce((m, f) => f(m, 1), m)
     // partially apply current anim
     return funcs[cur_anim](m,cur_anim_t);
+  },
+
+  waves : (min, max) => (m, t) => {
+    const amts = Array.apply(null, {length: m.vertices.length}).map(_ => Math.random(min,max));
+    m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + min));
+    return m;
+  },
+
+  // random
+  spikes : (amts) => (m, t) => {
+    m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + 1));
+    return m;
+  },
+
+  spikes2 : (min, max) => (m, t) => {
+    m.vertices = m.vertices.map((vertex, i) => { switch (Math.floor(i/3) % 3) {
+      case 0: return vertex * (((max - min) * t**2) + min)
+      case 1: return vertex
+      case 2: return vertex
+    }})
+    return m
+  },
+
+  rotate : (axis, amt = 1) => (m, t) => {
+    m.vertices = ([].concat.apply([], m.vertices.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
+          mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      })))
+    return m
   },
 
   /** Creates an animation from multiple concurrent animations */
