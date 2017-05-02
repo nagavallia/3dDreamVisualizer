@@ -153,9 +153,12 @@ function drawShape(gl, shape, program, xf, texture = null) {
 
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+    gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
     gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
     gl.useProgram(null);
 }
 

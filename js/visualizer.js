@@ -51,10 +51,8 @@ class SteveMarschnersDreamVisualizer {
       .then(_ => {
 
         /** One sphere */
-        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
+        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,0,0], [1,0,0])
         kick_sphere.animation = new Animation(kick_sphere, iHigh);
-        // for spikes
-        var amts = Array.apply(null, {length: kick_sphere.mesh.vertices.length}).map(_ => Math.random(0.5, 1));
         kick_sphere.animation.addSequence([
             anim.translate(0.75,0.25,0),
             anim.compose([
@@ -87,12 +85,14 @@ class SteveMarschnersDreamVisualizer {
 
         /** Another sphere */
         const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
+        // for spikes
+        var amts = Array.apply(null, {length: high_sphere.mesh.vertices.length}).map(_ => Math.random(0.1, 0.5));
         high_sphere.animation = new Animation(high_sphere, iKick);
         high_sphere.animation.addSequence([
             anim.translate(-1,1,0),
             anim.compose([
                 anim.translate(1,-1,0),
-                anim.scale(0.2,1),
+                anim.spikes(amts),
                 anim.translate(-1,1, 0)
             ])
         ])
@@ -100,7 +100,7 @@ class SteveMarschnersDreamVisualizer {
 
 
         /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1])
+        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [0.5,0.5,1])
         kick_sphere2.animation = new Animation(kick_sphere2, iKick);
         kick_sphere2.animation.addSequence([
           anim.translate(1,0,0),
