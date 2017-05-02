@@ -46,18 +46,20 @@ const anim = {
     return funcs[cur_anim](m,cur_anim_t);
   },
 
+  // each frame randomly scale vertex.xyz
   waves : (min, max) => (m, t) => {
     const amts = Array.apply(null, {length: m.vertices.length}).map(_ => Math.random(min,max));
     m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + min));
     return m;
   },
 
-  // random
+  // random vertices
   spikes : (amts) => (m, t) => {
     m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + 1));
     return m;
   },
 
+  // scale every third vertex (works well if faces are defined in a reasonable pattern)
   spikes2 : (min, max) => (m, t) => {
     m.vertices = m.vertices.map((vertex, i) => { switch (Math.floor(i/3) % 3) {
       case 0: return vertex * (((max - min) * t**2) + min)
