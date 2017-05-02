@@ -23,5 +23,6 @@ visualizer
   playbutton.removeAttribute('disabled')
   playbutton.innerHTML = 'Play/pause'
   playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
+  document.addEventListener('keypress', (event) => {if (event.key == 'p'){ visualizer.togglePlayback() }})
 })
 .catch(console.error)

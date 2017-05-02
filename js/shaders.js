@@ -15,7 +15,7 @@ function initializeWebGL(canvas) {
     return gl;
 }
 
-function pointerSetup(canvas) {
+function pointerSetup(gl, canvas) {
     // mouse lock stuff
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
@@ -40,6 +40,32 @@ function pointerSetup(canvas) {
         document.removeEventListener("mousemove", rotateCamera, false);
       }
     }
+
+    const fullscreen = () => {
+        canvas.height = screen.height;
+        canvas.width = screen.width;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        if(canvas.webkitRequestFullScreen) {
+           canvas.webkitRequestFullScreen();
+        } else {
+            canvas.mozRequestFullScreen();
+        }            
+    }
+
+    const exitfullscreen = () => {
+        if (!document.webkitIsFullScreen && !document.mozFullScreen){
+            canvas.width = 800;
+            canvas.height = 600;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+    }
+    
+    canvas.addEventListener("click",fullscreen)
+    document.addEventListener('webkitfullscreenchange', exitfullscreen, false);
+    document.addEventListener('mozfullscreenchange', exitfullscreen, false);
+    document.addEventListener("fullscreenchange", exitfullscreen, false );
+ 
+    
 
     // pointer lock event listeners
     // Hook pointer lock state change events for different browsers
@@ -158,7 +184,7 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
     gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    
+
     gl.useProgram(null);
 }
 
@@ -179,7 +205,7 @@ function updateVisualizer(viz, time) {
     viz.gl.useProgram(program);
 
     var perspective = mat4.create();
-    mat4.perspective(perspective, 70.0, 800.0 / 600.0, 0.1, 100.0);
+    mat4.perspective(perspective, 70.0, viz.canvas.width / viz.canvas.height, 0.1, 100.0);
 
     var cameraLoc = mat4.create();
     // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);

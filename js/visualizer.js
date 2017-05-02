@@ -24,7 +24,7 @@ class SteveMarschnersDreamVisualizer {
     this.viewUp = vec3.fromValues(0.0,1.0,0.0);
     this.camera = new Camera(this.viewPoint, this.viewDir, this.viewUp, 1.0);
 
-    pointerSetup(this.canvas)
+    pointerSetup(this.gl, this.canvas)
 
   }
 

@@ -51,6 +51,21 @@ const anim = {
     return m
   },
 
+  rotate : (axis, amt = 1) => (m, t) => {
+    m.vertices = ([].concat.apply([], m.vertices.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
+          mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      })))
+    return m
+  },
+
   /** Creates an animation from multiple concurrent animations */
   compose : (funcs) => (m, t) => funcs.reduce((m, f) => f(m, t), m)
 }
