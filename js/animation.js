@@ -1,3 +1,4 @@
+
 const transform = {
   /** Scales an object */
   scale : s => m => Object.assign(m, {
@@ -47,9 +48,6 @@ const anim = {
   compose : (funcs) => (m, t) => funcs.reduce((m, f) => f(m, t), m)
 }
 
-
-
-
 class Animation {
 
     /**
@@ -63,14 +61,8 @@ class Animation {
         // the gl shape object returned by createShape
         this.transformations = [];
         this.sequence_i = 0;
-
-        // this scale is weird if the object is not centered..
-        // probably want to fix this so that scale behaves similarly
-        // at all locations
-        
+        this.mesh = jQuery.extend(true, {}, this.aobject.original)
     }
-
-
 
     addCompose(funcs) {
         this.transformations.push(anim.compose(funcs))
@@ -111,11 +103,22 @@ class Animation {
         return (1-i)*min + i*max;
     }
 
+
+    resetMesh() {
+        const clone = function (x) { return x }
+        // this.mesh = jQuery.extend(true, {}, this.aobject.original); // this is slow
+        this.mesh.vertices  = this.aobject.original.vertices.map(clone)
+        this.mesh.lineColor = this.aobject.original.lineColor.map(clone)
+        this.mesh.fillColor = this.aobject.original.fillColor.map(clone)
+    }
+
     update() {
-        this.mesh = jQuery.extend(true, {}, this.aobject.original); // this is slow
+        this.resetMesh()
         const len = this.transformations.length; // small performance hack
-        for (let i = 0; i < len; i++) {
-          this.transformations[i](this.mesh, this.get_i());
+        const i = this.get_i();
+
+        for (var j = 0; j < len; j++) {
+          this.transformations[j](this.mesh, i);
         };
     }
 }

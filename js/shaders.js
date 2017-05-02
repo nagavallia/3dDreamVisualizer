@@ -121,13 +121,13 @@ function updateShapeVertices(gl, shape, verts){
 function drawShape(gl, shape, program, xf, texture = null) {
     gl.useProgram(program);
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
-    var positionLocation = gl.getAttribLocation(program, "position");
+    const positionLocation = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
-    var texLocation = gl.getAttribLocation(program, "vert_texCoord");
+    const texLocation = gl.getAttribLocation(program, "vert_texCoord");
     gl.enableVertexAttribArray(texLocation);
     gl.vertexAttribPointer(texLocation, 2, gl.FLOAT, false, 4 * 2, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
@@ -135,18 +135,18 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "toWorld"), false, xf);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
 
-    var useTexsLocation = gl.getUniformLocation(program, "use_textures");
+    const useTexsLocation = gl.getUniformLocation(program, "use_textures");
     gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
 
     if (ENABLE_TEXTURES){
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
-            var textureLocation = gl.getUniformLocation(program, "texture");
+            const textureLocation = gl.getUniformLocation(program, "texture");
             gl.uniform1i(textureLocation, 0);
         }
     } else {
-        var colorLocation = gl.getUniformLocation(program, "color");
+        const colorLocation = gl.getUniformLocation(program, "color");
         gl.uniform3fv(colorLocation, shape.fillColor)
     }
 
@@ -160,10 +160,6 @@ function drawShape(gl, shape, program, xf, texture = null) {
 
 function updateVisualizer(viz, time) {
 
-    // viz.objects.forEach(object => {
-       
-    // })
-
     for (var i = 0; i < viz.objects.length; i++) {
         let object = viz.objects[i]
         if (!object.animation) continue;
@@ -171,24 +167,20 @@ function updateVisualizer(viz, time) {
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     };
 
-
-
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-
-    
     viz.gl.useProgram(program);
 
-    var perspective = mat4.create();
+    const perspective = mat4.create();
     mat4.perspective(perspective, 70.0, 800.0 / 600.0, 0.1, 100.0);
 
-    var cameraLoc = mat4.create();
+    const cameraLoc = mat4.create();
     // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
 
-    var xf = mat4.create();
+    const xf = mat4.create();
     mat4.multiply(xf, perspective, cameraLoc);
     mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
 
@@ -208,7 +200,7 @@ function updateVisualizer(viz, time) {
  * the vizualizer has been initialized
  */
 const initVisualizer = (viz) => {
-    
+
     viz.gl.depthFunc(viz.gl.LESS);
     viz.gl.enable(viz.gl.DEPTH_TEST);
 
