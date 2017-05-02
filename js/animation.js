@@ -36,9 +36,19 @@ const anim = {
     return m;
   },
 
+  // random
   spikes : (amts) => (m, t) => {
     m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + 1));
     return m;
+  },
+
+  spikes2 : (min, max) => (m, t) => {
+    m.vertices = m.vertices.map((vertex, i) => { switch (Math.floor(i/3) % 3) {
+      case 0: return vertex * (((max - min) * t**2) + min)
+      case 1: return vertex
+      case 2: return vertex
+    }})
+    return m
   },
 
   /** Creates an animation from multiple concurrent animations */

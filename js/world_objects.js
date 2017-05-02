@@ -36,7 +36,6 @@ class AObject {
       lineColor : lColor,
       fillColor : color,
     }
-    console.log(this.mesh.lineInd);
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);
     this.animation = null

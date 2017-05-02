@@ -92,7 +92,7 @@ class SteveMarschnersDreamVisualizer {
             anim.translate(-1,1,0),
             anim.compose([
                 anim.translate(1,-1,0),
-                anim.spikes(amts),
+                anim.spikes2(1,2.5),
                 anim.translate(-1,1, 0)
             ])
         ])
@@ -140,12 +140,10 @@ class SteveMarschnersDreamVisualizer {
       // Stop playback and save the position of the playhead
       this.source.stop(0);
       this.startOffset += context.currentTime - this.startTime;
-      console.log('paused at', this.startOffset);
 
     } else {
       this.source = context.createBufferSource();
       this.startTime = context.currentTime;
-      console.log('started at', this.startOffset);
 
       // Connect graph
       this.source.buffer = this.audio;
