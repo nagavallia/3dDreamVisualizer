@@ -127,6 +127,10 @@ function createShape(gl, data) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.triInd), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    shape.normBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
     shape.uvBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
@@ -144,21 +148,39 @@ function updateShapeVertices(gl, shape, verts){
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
-function drawShape(gl, shape, program, xf, texture = null) {
+function drawShape(gl, shape, program, transforms, lights, texture = null) {
+    
     gl.useProgram(program);
+    
+    const exposure = 1.0; const roughness = 0.25;
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
+    gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
+        
+    gl.uniform3fv(gl.getUniformLocation(program,"lightColors"), lights.colors);  
+    gl.uniform3fv(gl.getUniformLocation(program,"lightPositions"), lights.positions);   
+    
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     const positionLocation = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+    const normalLocation = gl.getAttribLocation(program, "normal");
+    gl.enableVertexAttribArray(normalLocation);
+    gl.vertexAttribPointer(normalLocation, 3, gl.FLOAT, false, 4 * 3, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
-    const texLocation = gl.getAttribLocation(program, "vert_texCoord");
+    const texLocation = gl.getAttribLocation(program, "texCoord");
     gl.enableVertexAttribArray(texLocation);
     gl.vertexAttribPointer(texLocation, 2, gl.FLOAT, false, 4 * 2, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "toWorld"), false, xf);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "normalMatrix"), false, transforms.normals);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, transforms.camera);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
+    
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
 
     const useTexsLocation = gl.getUniformLocation(program, "use_textures");
@@ -179,6 +201,8 @@ function drawShape(gl, shape, program, xf, texture = null) {
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
+    // draw lines last
+    // TODO make these not use regular lighting of course
     gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
     gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
@@ -201,24 +225,25 @@ function updateVisualizer(viz, time) {
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
     viz.gl.useProgram(program);
 
-    var perspective = mat4.create();
-    mat4.perspective(perspective, 70.0, viz.canvas.width / viz.canvas.height, 0.1, 100.0);
+    var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
+    mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
-    const cameraLoc = mat4.create();
+    var cameraMatrix = mat4.create();
+    mat4.translate(cameraMatrix, cameraMatrix, vec3.fromValues(0.0, 0.0, -4.0));
     // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
+    
+    var normalMatrix = mat4.create();    
+    mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
-    const xf = mat4.create();
-    mat4.multiply(xf, perspective, cameraLoc);
-    mat4.translate(xf, xf, vec3.fromValues(0.0, 0.0, -4.0))
-
+    var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
+    
+    var lights = { positions: [-2.0,0.0,-10.0], colors: [1000.0,1000.0,1000.0] };
+    
     for (var i = 0; i < viz.objects.length; i++) {
-        if (ENABLE_TEXTURES){
-            drawShape(viz.gl, viz.objects[i].gl_shape, program, xf, wallTexture);
-        } else {
-            drawShape(viz.gl, viz.objects[i].gl_shape, program, xf);
-        }
+        drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
+            ENABLE_TEXTURES ? wallTexture : null);
     };
 
     viz.gl.useProgram(null);
