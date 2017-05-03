@@ -71,7 +71,7 @@ class SteveMarschnersDreamVisualizer {
         }
 
         /** One sphere */
-        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,0,0], [1,0,0])
+        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,1,0], [1,1,0])
         // kick_sphere.transform(transform.translate(-1,0,0))
         kick_sphere.animation = new Animation(kick_sphere, iHigh);
         kick_sphere.animation.addSequence([
