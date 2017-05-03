@@ -40,14 +40,56 @@ function pointerSetup(gl, canvas, camera) {
         camera.updateBasis();
     }
 
+    const keyboardCamera = (e) => {
+        switch (e.key) {
+            case 'w':
+                var wMove = vec3.clone(camera.basisW); vec3.normalize(wMove, wMove); vec3.negate(wMove, wMove);
+                vec3.add(camera.viewPoint, camera.viewPoint, wMove);
+                break;
+            case 'a':
+                var aMove = vec3.clone(camera.basisU); vec3.normalize(aMove, aMove); vec3.negate(aMove, aMove);
+                vec3.add(camera.viewPoint, camera.viewPoint, aMove);
+                break;
+            case 's':
+                var sMove = vec3.clone(camera.basisW); vec3.normalize(sMove, sMove);
+                vec3.add(camera.viewPoint, camera.viewPoint, sMove);
+                break;
+            case 'd':
+                var dMove = vec3.clone(camera.basisU); vec3.normalize(dMove, dMove); 
+                vec3.add(camera.viewPoint, camera.viewPoint, dMove);
+                break;
+            case 'q':
+                var qRot = (1.0/40.0)*2*Math.PI;
+                var qQuat = quat.create(); quat.setAxisAngle(qQuat, camera.viewDir, qRot);
+                vec3.transformQuat(camera.viewUp, camera.viewUp, qQuat);
+                break;
+            case 'e':
+                var eRot = -1.0*(1.0/40.0)*2*Math.PI;
+                var eQuat = quat.create(); quat.setAxisAngle(eQuat, camera.viewDir, eRot);
+                vec3.transformQuat(camera.viewUp, camera.viewUp, eQuat);
+                break;
+            case 'Shift':
+                var shiftMove = vec3.clone(camera.basisV); vec3.normalize(shiftMove, shiftMove); vec3.negate(shiftMove, shiftMove);
+                vec3.add(camera.viewPoint, camera.viewPoint, shiftMove);
+                break;
+            case ' ': //space bar pressed
+                var spaceMove = vec3.clone(camera.basisV); vec3.normalize(spaceMove, spaceMove); 
+                vec3.add(camera.viewPoint, camera.viewPoint, spaceMove);
+                break;
+        }
+        camera.updateBasis();
+    }
+
     const lockChangeAlert = () => {
       if (document.pointerLockElement === canvas ||
           document.mozPointerLockElement === canvas) {
         console.log('The pointer lock status is now locked');
         document.addEventListener("mousemove", rotateCamera, false);
+        document.addEventListener("keydown", keyboardCamera, false)
       } else {
         console.log('The pointer lock status is now unlocked');
         document.removeEventListener("mousemove", rotateCamera, false);
+        document.removeEventListener("keydown", keyboardCamera, false);
       }
     }
 
