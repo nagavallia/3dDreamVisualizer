@@ -43,6 +43,10 @@ class SteveMarschnersDreamVisualizer {
     const iHigh = () => this.bandan.getFrequencyValue(18000)
     const iTime = () => this.animation_i
 
+    this.lightHigh = () => this.bandan.getFrequencyValue(18000)
+    this.lightKick = () => this.bandan.getFrequencyValue(22)
+    this.lightMid = () => this.bandan.getFrequencyValue(4000)
+
     return Promise.resolve(new ResourceLoader(this))
       // audio buffer needs to be loaded to 'audio', also load meshes and textures
       .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
@@ -114,7 +118,7 @@ class SteveMarschnersDreamVisualizer {
         this.objects.push(high_sphere)
 
         /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [0.5,0.5,1])
+        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [1,1,1])
         kick_sphere2.animation = new Animation(kick_sphere2, iKick);
         kick_sphere2.animation.addSequence([
           anim.translate(1,0,0),
