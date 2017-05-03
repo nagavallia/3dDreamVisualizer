@@ -26,7 +26,6 @@ class Camera {
 class AObject {
   constructor (gl, raw_mesh, textureImg, color = [1.0, 0.0, 0.0], lColor = [0,0,0]) {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
-    console.log("RAY",parsed);
     this.mesh = {
       vertices : parsed.c_verts,
       normals : parsed.c_norms,
@@ -37,7 +36,7 @@ class AObject {
       }}))),
       uvs : parsed.c_uvt,
       triInd : parsed.i_verts,
-      normInd : parsed.i_norms,
+      //normInd : parsed.i_norms,
       lineColor : lColor,
       fillColor : color,
     }

@@ -17,7 +17,7 @@ class SteveMarschnersDreamVisualizer {
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
     this.animation_i = 0.0;
-    this.clearColor = [0.6, 0.6, 1.0, 0.0]
+    this.clearColor = [0.1, 0.1, 0.2, 0.0]
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,1.0);
