@@ -296,7 +296,22 @@ function updateVisualizer(viz, time) {
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
     
-    var lights = { positions: [0.0,-1.0,4.0], colors: [10.0,10.0,10.0] };
+    var lights = { 
+        positions: [
+            0,-1.0,5.0,
+            4.0,0.0,3.0,
+            -4,0,3,
+            0,1,10,
+        ], 
+        colors: [
+            viz.lightHigh()*50,viz.lightHigh()*50,viz.lightHigh()*50,
+            viz.lightKick()*20,0,0,
+            0,0,viz.lightMid()*20,
+            30,30,30,
+        ],
+    };
+
+    viz.clearColor = [viz.lightHigh(), viz.lightHigh(), viz.lightHigh(), 0];
     
     for (var i = 0; i < viz.objects.length; i++) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
