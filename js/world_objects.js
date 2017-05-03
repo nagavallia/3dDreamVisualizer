@@ -9,6 +9,16 @@ class Camera {
       this.viewWidth = 1.0;
       this.viewHeight = 1.0;
 
+      this.lookPoint = vec3.create();
+
+      this.basisW = vec3.create(); this.basisU = vec3.create(); this.basisV = vec3.create();
+
+      this.updateBasis();
+  }
+
+  updateBasis() {
+      vec3.add(this.lookPoint, this.viewPoint, this.viewDir);
+
       //create w basis vector
       this.basisW = vec3.clone(this.viewDir);
       vec3.normalize(this.basisW,vec3.negate(this.basisW, this.basisW));

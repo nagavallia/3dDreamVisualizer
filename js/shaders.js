@@ -15,7 +15,7 @@ function initializeWebGL(canvas) {
     return gl;
 }
 
-function pointerSetup(gl, canvas) {
+function pointerSetup(gl, canvas, camera) {
     // mouse lock stuff
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
@@ -25,8 +25,19 @@ function pointerSetup(gl, canvas) {
     canvas.onclick = () => canvas.requestPointerLock()
 
     const rotateCamera = (e) => {
-        var xRot = (e.movementX/canvas.width)*2*Math.PI;
-        var yRot = (e.movementY/canvas.height)*2*Math.PI;
+        //get angles of rotation
+        var xRot = -1.0*(e.movementX/canvas.width)*2*Math.PI;
+        var yRot = -1.0*(e.movementY/canvas.height)*2*Math.PI;
+
+        //turn angles into quaternions
+        var xQuat = quat.create(); var yQuat = quat.create();
+        quat.setAxisAngle(xQuat, camera.basisV, xRot); quat.setAxisAngle(yQuat, camera.basisU, yRot);
+
+        //apply quat rotation
+        vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
+        vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+
+        camera.updateBasis();
     }
 
     const lockChangeAlert = () => {
@@ -227,10 +238,13 @@ function updateVisualizer(viz, time) {
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
-    var cameraMatrix = mat4.create();   
-    var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
-    vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
-    mat4.lookAt(cameraMatrix, pos, to, up);
+    var cameraMatrix = mat4.create();
+    mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
+
+    //var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
+    //vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
+    //mat4.lookAt(cameraMatrix, pos, to, up);
+
     // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));

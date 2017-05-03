@@ -20,12 +20,12 @@ class SteveMarschnersDreamVisualizer {
     this.clearColor = [0.1, 0.1, 0.2, 0.0]
 
     // initialize camera
-    this.viewPoint = vec3.fromValues(0.0,0.0,1.0);
-    this.viewDir = vec3.fromValues(0.0,0.0,-1.0);
+    this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
+    this.viewDir = vec3.fromValues(0.0,0.0,-4.0);
     this.viewUp = vec3.fromValues(0.0,1.0,0.0);
     this.camera = new Camera(this.viewPoint, this.viewDir, this.viewUp, 1.0);
 
-    pointerSetup(this.gl, this.canvas)
+    pointerSetup(this.gl, this.canvas, this.camera)
 
   }
 
