@@ -1,4 +1,4 @@
-add keyboard camera movement
+smooth keyboard camera movement
 
 change song from webpage
 
@@ -9,3 +9,5 @@ change inverted camera through webpage
 support user uploaded meshes
 
 support user uploaded songs
+
+look into camera sensitivity options
