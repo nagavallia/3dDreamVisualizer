@@ -152,7 +152,7 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     
     gl.useProgram(program);
     
-    const exposure = 1.0; const roughness = 0.25;
+    const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
         
@@ -201,8 +201,7 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-    // draw lines last
-    // TODO make these not use regular lighting of course
+    // draw lines on shape last
     gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
     gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
@@ -228,8 +227,10 @@ function updateVisualizer(viz, time) {
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
-    var cameraMatrix = mat4.create();
-    mat4.translate(cameraMatrix, cameraMatrix, vec3.fromValues(0.0, 0.0, -4.0));
+    var cameraMatrix = mat4.create();   
+    var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
+    vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
+    mat4.lookAt(cameraMatrix, pos, to, up);
     // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
     // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
@@ -239,7 +240,7 @@ function updateVisualizer(viz, time) {
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
     
-    var lights = { positions: [-2.0,0.0,-10.0], colors: [1000.0,1000.0,1000.0] };
+    var lights = { positions: [0.0,-1.0,4.0], colors: [10.0,10.0,10.0] };
     
     for (var i = 0; i < viz.objects.length; i++) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,

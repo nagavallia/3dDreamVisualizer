@@ -15,6 +15,8 @@ const transform = {
 
 }
 
+// TODO it will be hard but we need to implement changing normals also in the animations
+
 /*
  * only considering the t value for the range [0, 1] => [0, 1]
  */
