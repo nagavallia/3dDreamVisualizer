@@ -11,3 +11,11 @@ support user uploaded meshes
 support user uploaded songs
 
 look into camera sensitivity options
+
+more default meshes
+
+textures! 
+
+animate normals (feasible?)
+
+normal maps (low priority)
