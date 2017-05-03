@@ -37,6 +37,14 @@ const anim = {
     return m
   },
 
+  translateFixed : (x, y, z) => (m, t) => {
+    m.vertices = m.vertices.map((vertex, i) => { switch (i%3) {
+      case 0: return vertex + x
+      case 1: return vertex + y
+      case 2: return vertex + z
+    }})
+    return m
+  },
   /** Creates a sequence of animations that run one after the other, in t time */
   seq : (funcs) => (m, t) => {
     const seq_t = t*funcs.length - 0.0001; // for round off
