@@ -290,7 +290,9 @@ function updateVisualizer(viz, time) {
         }
     }
 
-
+    if (viz.lightHigh() > 0.33){
+        survivors.push(new PObject(viz.gl, 1, [3*Math.random()-1.5, 3*Math.random()-1.5, 3*Math.random()-1.5], viz.lightHigh()*2, [0.5*Math.random()+0.2, 0.5*Math.random()+0.2, 0.5*Math.random()+0.2], 80000000));
+    }
 
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
