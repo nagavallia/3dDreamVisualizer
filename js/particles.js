@@ -1,5 +1,5 @@
-const MAX_PARTICLES = 1000;
-const PARTICLE_SIZE = 0.03;
+const MAX_PARTICLES = 3000;
+const PARTICLE_SIZE = 0.02;
 
 class Particle {
     constructor(radius, center, density, color, duration){

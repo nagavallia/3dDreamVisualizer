@@ -17,6 +17,7 @@ class SteveMarschnersDreamVisualizer {
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
     this.particles = []
+    this.colors = [[1,0.2,0.2],[0.2,1,0.2],[0.2,0.2,1],[1,1,0.2],[1,0.2,1],[0.2,1,1],[1,1,1]];
     this.animation_i = 0.0;
     this.clearColor = [0.1, 0.1, 0.2, 0.0]
 
