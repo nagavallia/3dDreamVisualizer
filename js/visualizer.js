@@ -72,34 +72,34 @@ class SteveMarschnersDreamVisualizer {
 
         /** One sphere */
         const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,1,0], [1,1,0])
-        // kick_sphere.transform(transform.translate(-1,0,0))
+        // kick_sphere.transform(transform.translate(1,0,0))
         kick_sphere.animation = new Animation(kick_sphere, iHigh);
         kick_sphere.animation.addSequence([
             anim.translate(0.75,0.25,0),
             anim.compose([
-                anim.translate(-0.75,-0.25,0),
+                anim.translateFixed(-0.75,-0.25,0),
                 anim.waves(1,2),
-                anim.translate(0.75, 0.25, 0)
+                anim.translateFixed(0.75, 0.25, 0)
             ]),
             anim.compose([
-                anim.translate(-0.75,-0.25,0),
+                anim.translateFixed(-0.75,-0.25,0),
                 anim.waves(1,2),
-                anim.translate(0.75, 0.25, 0)
+                anim.translateFixed(0.75, 0.25, 0)
             ]),
             anim.compose([
-                anim.translate(-0.75,-0.25,0),
+                anim.translateFixed(-0.75,-0.25,0),
                 anim.waves(1,2),
-                anim.translate(0.75, 0.25, 0)
+                anim.translateFixed(0.75, 0.25, 0)
             ]),
             anim.compose([
-                anim.translate(-0.75,-0.25,0),
+                anim.translateFixed(-0.75,-0.25,0),
                 anim.waves(1,2),
-                anim.translate(0.75, 0.25, 0)
+                anim.translateFixed(0.75, 0.25, 0)
             ]),
             anim.compose([
-                anim.translate(-0.75,-0.25,0),
+                anim.translateFixed(-0.75,-0.25,0),
                 anim.waves(1,2),
-                anim.translate(0.75, 0.25, 0)
+                anim.translateFixed(0.75, 0.25, 0)
             ]),
         ])
         this.objects.push(kick_sphere)
