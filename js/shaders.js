@@ -31,11 +31,43 @@ function pointerSetup(gl, canvas, camera) {
 
         //turn angles into quaternions
         var xQuat = quat.create(); var yQuat = quat.create();
-        quat.setAxisAngle(xQuat, camera.basisV, xRot); quat.setAxisAngle(yQuat, camera.basisU, yRot);
+        if (camera.orbitMode) {
+            console.log('before viewPoint: ' + camera.viewPoint);
+            var cameraMatrix = mat4.create();
+            mat4.lookAt(cameraMatrix, camera.viewPoint, camera.lookPoint, camera.viewUp);
 
-        //apply quat rotation
-        vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
-        vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+            var camMatInv = mat4.create();
+            mat4.invert(camMatInv,cameraMatrix);
+            var worldOrigin = vec4.fromValues(0,0,0,1);
+            vec4.scale(worldOrigin, worldOrigin, worldOrigin[3]);
+
+            var translate = mat4.create(); var transInv = mat4.create();
+            mat4.fromTranslation(translate, vec3.fromValues(-worldOrigin[0], -worldOrigin[1], -worldOrigin[2]));
+            mat4.invert(transInv, translate);
+
+            vec3.transformMat4(camera.viewPoint,camera.viewPoint,translate);
+
+            quat.setAxisAngle(xQuat, vec3.fromValues(0,1,0), xRot); quat.setAxisAngle(yQuat, vec3.fromValues(1,0,0), yRot);
+
+            //apply quat rotation
+            vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
+            vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+
+            vec3.transformQuat(camera.viewPoint, camera.viewPoint, xQuat);
+            vec3.transformQuat(camera.viewPoint, camera.viewPoint, yQuat);
+
+            vec3.transformMat4(camera.viewPoint,camera.viewPoint,transInv);
+
+            // console.log('after viewPoint: ' + camera.viewPoint);
+
+        }
+        else {
+            quat.setAxisAngle(xQuat, camera.basisV, xRot); quat.setAxisAngle(yQuat, camera.basisU, yRot);
+
+            //apply quat rotation
+            vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
+            vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+        }
 
         camera.updateBasis();
     }
@@ -76,6 +108,40 @@ function pointerSetup(gl, canvas, camera) {
                 var spaceMove = vec3.clone(camera.basisV); vec3.normalize(spaceMove, spaceMove); 
                 vec3.add(camera.viewPoint, camera.viewPoint, spaceMove);
                 break;
+            case 'f':
+                camera.orbitMode = !camera.orbitMode;
+                break;
+            case '1':
+                camera.viewPoint = vec3.fromValues(0.0,0.0,4.0);
+                camera.viewDir = vec3.fromValues(0.0,0.0,-4.0);
+                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                break; 
+            case '2':
+                camera.viewPoint = vec3.fromValues(0.0,0.0,-4.0);
+                camera.viewDir = vec3.fromValues(0.0,0.0,4.0);
+                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                break; 
+            case '3':
+                camera.viewPoint = vec3.fromValues(4.0,0.0,0.0);
+                camera.viewDir = vec3.fromValues(-4.0,0.0,0.0);
+                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                break; 
+            case '4':
+                camera.viewPoint = vec3.fromValues(-4.0,0.0,0.0);
+                camera.viewDir = vec3.fromValues(4.0,0.0,0.0);
+                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                break; 
+            case '5':
+                console.log('hello');
+                camera.viewPoint = vec3.fromValues(0.0,4.0,0.0);
+                camera.viewDir = vec3.fromValues(0.0,-4.0,0.0);
+                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                break; 
+            case '6':
+                camera.viewPoint = vec3.fromValues(0.0,-4.0,0.0);
+                camera.viewDir = vec3.fromValues(0.0,4.0,0.0);
+                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                break; 
         }
         camera.updateBasis();
     }
