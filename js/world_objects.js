@@ -8,6 +8,7 @@ class Camera {
       this.projD = projD;
       this.viewWidth = 1.0;
       this.viewHeight = 1.0;
+      this.orbitMode = false;
 
       this.lookPoint = vec3.create();
 
