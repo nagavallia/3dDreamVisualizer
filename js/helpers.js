@@ -22,8 +22,33 @@ class ResourceLoader {
       .then(image => this.target[name] = image)
       .then(() => this)
   }
-}
 
+  registerObjSource(selector, callback) {
+    document.querySelector(selector).onChange(function (event) {
+      const file = event.target.files[0]
+      const reader = new FileReader()
+      reader.onload = function () { callback(event.target.result)}
+      reader.readAsArrayBuffer(file);
+    }) 
+  }
+
+  registerAudioSource(selector, context, callback) {
+    document.querySelector(selector).onChange(function (event) {
+      const file = event.target.files[0]
+      const reader = new FileReader()
+      reader.onload = function(event) {
+        context.decodeAudioData(event.target.result,
+          buffer => {
+            if (!buffer) rej('error decoding file data: ' + url)
+            else callback(buffer, null)
+          },
+          error => callback(null, error)
+        );
+      };
+      reader.readAsArrayBuffer(file);
+    }) 
+  }
+}
 
 /**
  * Loads an audio file to an audio context
@@ -33,7 +58,7 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
   request.open("GET", path, true)
   request.responseType = "arraybuffer"
   request.onerror = () => alert('BufferLoader: XHR error');
-  
+
   // Load and decode
   request.onload = () => context
     .decodeAudioData(request.response,
@@ -78,15 +103,15 @@ const ease = {
   outQuad: t => t*(2-t),
   // acceleration until halfway, then deceleration
   inOutQuad: t => t<.5 ? 2*t*t : -1+(4-2*t)*t,
-  // accelerating from zero velocity 
+  // accelerating from zero velocity
   inCubic: t => t*t*t,
-  // decelerating to zero velocity 
+  // decelerating to zero velocity
   outCubic: t => (--t)*t*t+1,
-  // acceleration until halfway, then deceleration 
+  // acceleration until halfway, then deceleration
   inOutCubic: t => t<.5 ? 4*t*t*t : (t-1)*(2*t-2)*(2*t-2)+1,
-  // accelerating from zero velocity 
+  // accelerating from zero velocity
   inQuart: t => t*t*t*t,
-  // decelerating to zero velocity 
+  // decelerating to zero velocity
   outQuart: t => 1-(--t)*t*t*t,
   // acceleration until halfway, then deceleration
   inOutQuart: t => t<.5 ? 8*t*t*t*t : 1-8*(--t)*t*t*t,
@@ -94,7 +119,7 @@ const ease = {
   inQuint: t => t*t*t*t*t,
   // decelerating to zero velocity
   outQuint: t => 1+(--t)*t*t*t*t,
-  // acceleration until halfway, then deceleration 
+  // acceleration until halfway, then deceleration
   inOutQuint: t => t<.5 ? 16*t*t*t*t*t : 1+16*(--t)*t*t*t*t,
   // threshold
   threshold: x => t => t < x ? 0 : 1
