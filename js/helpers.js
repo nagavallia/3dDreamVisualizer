@@ -100,3 +100,27 @@ const ease = {
   threshold: x => t => t < x ? 0 : 1
 }
 
+// REF http://stackoverflow.com/a/5624139 for color conversions
+function hexToRgb(hex) {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function componentToHex(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
+}
+
+function rgbToHex(r, g, b) {
+    return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+// end REF
+
+function hexTo01(hex){
+  var rgb = hexToRgb(hex);
+  return [rgb.r/255, rgb.g/255, rgb.b/255, 0];
+}

@@ -20,6 +20,16 @@
     <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+
+    <style>
+        table {
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 3px solid white;
+            padding: 10px;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -32,8 +42,67 @@
     <button id="playbutton" style="display: block" disabled="true">Please wait, loading...</button>
     <div> ( or just press 'p') </div>
     <div style="margin-top:50px"> ( click canvas for fullscreen )</div> 
-    <canvas id="freqcanvas" width="640" height="360"></canvas>
+    <div style="background-color: #efefef; margin-top: 30px">
+        <table style="width: 100%">
+            <tr>
+                <td colspan="2">
+                    <span>Choose song:</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 48%">
+                    <input type="file" id="songChoice">
+                </td>
+                <td style="width: 48%" id="songInputs">
+                    <form>
+                        <input type="radio" name="songname" value="songs/vollekraftvoraus.mp3" checked>Volle Kraft Voraus<br>
+                        <input type="radio" name="songname" value="songs/shooting_stars.mp3">Shooting Stars<br>
+                        <input type="radio" id="customsong" name="songname" value="whoops">Custom (use upload)&nbsp;<span id="selectedsong" style="color: grey"></span><br>
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span>Add new mesh:</span>
+                </td>
+                <td>
+                    <span>Choose enabled meshes:</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 48%">
+                    <input type="file" id="meshUpload">
+                </td>
+                <td style="width: 48%" id="selectedMeshes">
+                    <input type="checkbox" name="mesh" value="sphere.obj" checked>Sphere<br>
+                </td>
+            </tr>
+                        <tr>
+                <td colspan="2">
+                    <span>Background Color:</span>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 48%" id="colors">
+                    <form name="colorForm">
+                        <input type="radio" name="color" value="#ff0000" checked>Red<br>
+                        <input type="radio" name="color" value="#0000ff">Blue<br>
+                        <input type="radio" name="color" value="#00ff00">Green<br>
+                        <input type="radio" name="color" value="#f4b642">Orange<br>
+                        <input type="radio" name="color" value="#16161b">Black<br>
+                        <input type="radio" id="custombgcolor" name="color" value="custom">Custom<br>
+                    </form>
+                </td>
+                <td style="width: 48%; height: 97%; text-align: center" id="colorPicker">
+                    <span>Click to choose custom color:</span><br>
+                    <input type="color" id="bgColorPicker" name="color" style="width: 40%; height: 60%">
+                </td>
+            </tr>
+        </table>
 
+
+
+    </div>
     <h2>Team Members</h2>
 
     <ul>

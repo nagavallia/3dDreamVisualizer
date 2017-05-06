@@ -18,6 +18,7 @@ class SteveMarschnersDreamVisualizer {
     this.objects = []
     this.animation_i = 0.0;
     this.clearColor = [0.1, 0.1, 0.2, 0.0]
+    this.bgColor = [0.1, 0.1, 0.2, 0.0]
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
@@ -27,6 +28,59 @@ class SteveMarschnersDreamVisualizer {
 
     pointerSetup(this.gl, this.canvas, this.camera)
 
+    $("#songChoice").change(function (){
+      var selectedsong = $("#selectedsong");
+      var songUpload = $("#songChoice")[0];
+
+      if ('files' in songUpload){
+        if (songUpload.files.length == 0){
+          console.log('no song selected');
+        } else {
+          var song = songUpload.files[0];
+          if ('name' in song){
+            selectedsong.text(song.name);
+            $("#customsong").prop("checked", true);
+            var loader = new ResourceLoader(this);
+            loader.loadAudio(name, name, context);
+          }
+        }
+      }
+    });
+
+    $("#meshUpload").change(function(){
+      var selected = $("#selectedMeshes");
+      var upload = $("#meshUpload")[0];
+
+      if ('files' in upload){
+        if (upload.files.length == 0){
+          console.log('no mesh selected');
+        } else {
+          var mesh = upload.files[0];
+          if ('name' in mesh){
+            selected.append("<input type='checkbox' name='mesh' value='"+mesh.name+"' checked>"+mesh.name+"<br>")
+            var loader = new ResourceLoader(this);
+            loader.load3DObj(mesh.name, mesh.name);
+          }
+        }
+      }
+    });
+
+    var c = this;
+    $('input[type=radio][name=color]').change((function() {
+      if (this.value == 'custom'){
+        c.bgColor = hexTo01($("#bgColorPicker")[0].value);
+      } else {
+        c.bgColor = hexTo01(this.value);
+      }
+    }));
+
+    $('input[type=color][name=color]').change((function() {
+      console.log('changed')
+      if ($("#custombgcolor").prop("checked")){
+        console.log('picked')
+        c.bgColor = hexTo01($('input[type=color][name=color]')[0].value);
+      }
+    }));
   }
 
   /**
@@ -177,14 +231,6 @@ class SteveMarschnersDreamVisualizer {
 
   /** Update what we see on screen */
   draw(time) {
-
-    this.animation_i += INC;
-    if (this.animation_i > 1.0){
-        INC = -0.01;
-    } else if (this.animation_i < 0.0){
-        INC = 0.01;
-    }
-
     this.bandan.update()
     updateVisualizer(this, time)
     requestAnimationFrame(this.draw.bind(this));

@@ -311,7 +311,7 @@ function updateVisualizer(viz, time) {
         ],
     };
 
-    viz.clearColor = [viz.lightHigh(), viz.lightHigh(), viz.lightHigh(), 0];
+    viz.clearColor = viz.bgColor.map(color => 3*viz.lightHigh()*color);
     
     for (var i = 0; i < viz.objects.length; i++) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
