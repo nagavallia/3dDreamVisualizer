@@ -16,9 +16,12 @@ class SteveMarschnersDreamVisualizer {
     this.canvas = canvas
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
+    this.particles = []
+    this.colors = [[1,0.2,0.2],[0.2,1,0.2],[0.2,0.2,1],[1,1,0.2],[1,0.2,1],[0.2,1,1],[1,1,1]];
     this.animation_i = 0.0;
-    this.clearColor = [0.1, 0.1, 0.2, 0.0]
-    this.bgColor = [0.1, 0.1, 0.2, 0.0]
+    this.bgColor = [0.2,0.2,0.2, 0.0]
+    this.clearColor = this.bgColor;
+    this.respawn = [];
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
@@ -98,8 +101,11 @@ class SteveMarschnersDreamVisualizer {
     const iTime = () => this.animation_i
 
     this.lightHigh = () => this.bandan.getFrequencyValue(18000)
+    this.lastHigh = 0;
     this.lightKick = () => this.bandan.getFrequencyValue(22)
+    this.lastKick = 0;
     this.lightMid = () => this.bandan.getFrequencyValue(4000)
+    this.lastMid = 0;
 
     return Promise.resolve(new ResourceLoader(this))
       // audio buffer needs to be loaded to 'audio', also load meshes and textures
@@ -226,6 +232,21 @@ class SteveMarschnersDreamVisualizer {
       this.source.start(0, this.startOffset % this.audio.duration);
     }
     this.isPlaying = !this.isPlaying;
+  }
+
+  explode(){
+    if (this.objects.length < 2){
+      return;
+    }
+    for (var i = 0; i < this.objects.length; i++) {
+        if (!this.objects[i].animation) continue;
+
+        this.particles.push(PObject.createFromAObject(this.gl, this.objects[i].animation));
+        this.respawn.push(this.objects[i]);
+        setTimeout(() => {this.objects.push(this.respawn.pop())}, 5000);
+        this.objects.splice(i, 1);
+        return;
+    };
   }
 
 

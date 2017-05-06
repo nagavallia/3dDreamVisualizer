@@ -201,7 +201,11 @@ function updateShapeVertices(gl, shape, verts){
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
-function drawShape(gl, shape, program, transforms, lights, texture = null) {
+function updateShapeFillColor(shape, color){
+    shape.fillColor = color;
+}
+
+function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) {
     
     gl.useProgram(program);
     
@@ -239,6 +243,9 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     const useTexsLocation = gl.getUniformLocation(program, "use_textures");
     gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
 
+    const particleLocation = gl.getUniformLocation(program, "particle");
+    gl.uniform1i(particleLocation, +particles);
+
     if (ENABLE_TEXTURES){
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
@@ -271,6 +278,26 @@ function updateVisualizer(viz, time) {
         object.animation.update()
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     };
+
+
+    var survivors = []
+    for (var i = 0; i < viz.particles.length; i++){
+        let particle = viz.particles[i]
+        if (particle.update(time)){
+            updateShapeVertices(viz.gl, particle.gl_shape, particle.particle.mesh.vertices);
+            updateShapeFillColor(particle.gl_shape, particle.particle.mesh.fillColor);
+            survivors.push(particle);
+        }
+    }
+
+    if (viz.lightHigh() > 0.33){
+        survivors.push(new PObject(viz.gl, 1, [3*Math.random()-1.5, 3*Math.random()-1.5, 3*Math.random()-1.5], viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
+    }
+    if (Math.abs(viz.lightHigh() - viz.lastHigh) > 0.15){
+        if (Math.random() > 0.6){
+            setTimeout(() => {viz.explode();}, Math.floor(100*Math.random()));
+        }
+    }
 
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
@@ -305,6 +332,7 @@ function updateVisualizer(viz, time) {
         ], 
         colors: [
             viz.lightHigh()*50,viz.lightHigh()*50,viz.lightHigh()*50,
+            // 10,10,10,
             viz.lightKick()*20,0,0,
             0,0,viz.lightMid()*20,
             30,30,30,
@@ -318,7 +346,17 @@ function updateVisualizer(viz, time) {
             ENABLE_TEXTURES ? wallTexture : null);
     };
 
+    for (var i = 0; i < viz.particles.length; i++){
+        drawShape(viz.gl, viz.particles[i].gl_shape, program, transforms, lights, null, true);
+    }
+
+    viz.particles = survivors;
+
     viz.gl.useProgram(null);
+
+    viz.lastHigh = viz.lightHigh();
+    viz.lastMid = viz.lightMid();
+    viz.lastKick = viz.lightKick();
 }
 
 /**

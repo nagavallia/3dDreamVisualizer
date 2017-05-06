@@ -60,3 +60,22 @@ class AObject {
    */
   transform (func) { func(this.mesh); this.original = jQuery.extend(true, {}, this.mesh); }
 }
+
+class PObject {
+  constructor(gl, radius, center, density, color, duration){
+    this.particle = new Particle(radius, center, density, color, duration);
+    this.gl_shape = createShape(gl, this.particle.mesh);
+  }
+
+  update(time){
+    return this.particle.update(time);
+  }
+}
+
+PObject.createFromAObject = function(gl, aobj){
+  var pobj = new PObject(gl, 0,0,0,0,0);
+  pobj.particle = Particle.createParticlesFromMesh(aobj.mesh, 10000000);
+  pobj.gl_shape = createShape(gl, pobj.particle.mesh);
+
+  return pobj;
+}
