@@ -1,4 +1,4 @@
-const MAX_PARTICLES = 3000;
+const MAX_PARTICLES = 000;
 const PARTICLE_SIZE = 0.02;
 const UPDATE_AMT = 0.02;
 

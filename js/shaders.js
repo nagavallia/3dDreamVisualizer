@@ -293,6 +293,11 @@ function updateVisualizer(viz, time) {
     if (viz.lightHigh() > 0.33){
         survivors.push(new PObject(viz.gl, 1, [3*Math.random()-1.5, 3*Math.random()-1.5, 3*Math.random()-1.5], viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
     }
+    if (Math.abs(viz.lightHigh() - viz.lastHigh) > 0.15){
+        if (Math.random() > 0.6){
+            setTimeout(() => {viz.explode();}, Math.floor(100*Math.random()));
+        }
+    }
 
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
@@ -348,6 +353,10 @@ function updateVisualizer(viz, time) {
     viz.particles = survivors;
 
     viz.gl.useProgram(null);
+
+    viz.lastHigh = viz.lightHigh();
+    viz.lastMid = viz.lightMid();
+    viz.lastKick = viz.lightKick();
 }
 
 /**
