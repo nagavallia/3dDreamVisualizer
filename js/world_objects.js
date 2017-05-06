@@ -71,3 +71,11 @@ class PObject {
     return this.particle.update(time);
   }
 }
+
+PObject.createFromAObject = function(gl, aobj){
+  var pobj = new PObject(gl, 0,0,0,0,0);
+  pobj.particle = Particle.createParticlesFromMesh(aobj.mesh, 10000000);
+  pobj.gl_shape = createShape(gl, pobj.particle.mesh);
+
+  return pobj;
+}

@@ -176,6 +176,17 @@ class SteveMarschnersDreamVisualizer {
     this.isPlaying = !this.isPlaying;
   }
 
+  explode(){
+    for (var i = 0; i < this.objects.length; i++) {
+        if (!this.objects[i].animation) continue;
+        this.objects[i].animation.update();
+        this.particles.push(PObject.createFromAObject(this.gl, this.objects[i].animation));
+    };
+    this.respawn = this.objects;
+    setTimeout(() => {this.objects = this.respawn; this.respawn = [];}, 5000);
+    this.objects = [];
+  }
+
 
   /** Update what we see on screen */
   draw(time) {
