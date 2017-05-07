@@ -39,7 +39,10 @@ class AObject {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
     this.mesh = {
       vertices : parsed.c_verts,
+      // weird seems like normals were backwards or something TODO
       normals : parsed.c_norms,
+      // normals : ([].concat.apply([], parsed.i_norms
+      //   .map(v => [parsed.c_norms[3*v], parsed.c_norms[3*v+1], parsed.c_norms[3*v+2]]))),
       lineInd : ([].concat.apply([], parsed.i_verts.map((vert, i) => { switch(i % 3){
         case 0: 
         case 1: return [vert, parsed.i_verts[i+1]]
@@ -51,6 +54,10 @@ class AObject {
       lineColor : lColor,
       fillColor : color,
     }
+    if (this.mesh.uvs.length == 0){
+      this.mesh.uvs = Array.apply(null, {length: this.mesh.vertices.length}).map(_ => 0);
+    }
+    console.log(this.mesh);
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);
     this.animation = null

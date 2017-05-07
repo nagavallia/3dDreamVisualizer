@@ -112,7 +112,7 @@ class SteveMarschnersDreamVisualizer {
       .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
       // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
       .then(loader => loader.loadImage('earthImage', 'data/earth.png'))
-      .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
+      .then(loader => loader.load3DObj('sphere_obj', 'bunny.obj'))
       
       // things have been loaded 
       .then(_ => {
