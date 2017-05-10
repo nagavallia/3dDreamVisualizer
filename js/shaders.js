@@ -143,7 +143,7 @@ function pointerSetup(gl, canvas, camera) {
                 camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
                 break; 
             case '7':
-                camera.viewPoint = vec3.fromValues(11,15,16);
+                camera.viewPoint = vec3.fromValues(11/1.3,15/1.3,16/1.3);
                 camera.viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
                 camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
                 break;
@@ -379,7 +379,6 @@ function updateVisualizer(viz, time) {
         }
     }
 
-    console.log(viz.camera.viewDir)
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);

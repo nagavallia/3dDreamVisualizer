@@ -201,6 +201,10 @@ class SteveMarschnersDreamVisualizer {
           this.objects.push(rot_sphere)
         }
 
+        const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
+        globe.transform(transform.scale(-20))
+        this.objects.push(globe)
+
         // /** Another sphere */
         // const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
         // high_sphere.animation = new Animation(high_sphere, iKick);
