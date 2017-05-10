@@ -1,6 +1,8 @@
 
 /*********************************** audio ***********************************/
 
+alert("Checkout camera angle 7 (by hitting '7' after clicking the canvas)");
+
 /** Create a new audio context */
 const context = new (window.AudioContext || window.webkitAudioContext)();
 

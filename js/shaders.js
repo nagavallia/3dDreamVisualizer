@@ -142,6 +142,11 @@ function pointerSetup(gl, canvas, camera) {
                 camera.viewDir = vec3.fromValues(0.0,4.0,0.0);
                 camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
                 break; 
+            case '7':
+                camera.viewPoint = vec3.fromValues(11,15,16);
+                camera.viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
+                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                break;
         }
         camera.updateBasis();
     }
@@ -267,6 +272,12 @@ function updateShapeVertices(gl, shape, verts){
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
+function updateShapeNormals(gl, shape, normals){
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}
+
 function updateShapeFillColor(shape, color){
     shape.fillColor = color;
 }
@@ -343,6 +354,7 @@ function updateVisualizer(viz, time) {
         if (!object.animation) continue;
         object.animation.update()
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
+        updateShapeNormals(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.normals);
     };
 
 
@@ -357,7 +369,9 @@ function updateVisualizer(viz, time) {
     }
 
     if (viz.lightHigh() > 0.33){
-        survivors.push(new PObject(viz.gl, 1, [3*Math.random()-1.5, 3*Math.random()-1.5, 3*Math.random()-1.5], viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
+        survivors.push(new PObject(viz.gl, 1, 
+            [viz.camera.viewPoint[0]+3*Math.random()-1.5, viz.camera.viewPoint[1]+3*Math.random()-1.5, viz.camera.viewPoint[2]+3*Math.random()-1.5],
+            viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
     }
     if (Math.abs(viz.lightHigh() - viz.lastHigh) > 0.15){
         if (Math.random() > 0.6){
@@ -365,6 +379,7 @@ function updateVisualizer(viz, time) {
         }
     }
 
+    console.log(viz.camera.viewDir)
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
@@ -388,20 +403,19 @@ function updateVisualizer(viz, time) {
     mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
-    
+
     var lights = { 
         positions: [
-            0,-1.0,5.0,
+            viz.camera.viewPoint[0] - 10*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 10*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 10*viz.camera.viewDir[2],
+            0,5,0,
             4.0,0.0,3.0,
             -4,0,3,
-            0,1,10,
         ], 
         colors: [
-            viz.lightHigh()*50,viz.lightHigh()*50,viz.lightHigh()*50,
-            // 10,10,10,
+            800,800,800,
+            viz.lightHigh()*300,viz.lightHigh()*300,viz.lightHigh()*300,
             viz.lightKick()*20,0,0,
             0,0,viz.lightMid()*20,
-            30,30,30,
         ],
     };
 

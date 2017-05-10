@@ -37,6 +37,7 @@ class Camera {
 class AObject {
   constructor (gl, raw_mesh, textureImg, color = [1.0, 0.0, 0.0], lColor = [0,0,0]) {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
+    this.gl = gl;
     this.mesh = {
       vertices : parsed.c_verts,
       normals : parsed.c_norms,
@@ -59,7 +60,12 @@ class AObject {
   /**
    * Mutably transforms this object's mesh with a transformation function
    */
-  transform (func) { func(this.mesh); this.original = jQuery.extend(true, {}, this.mesh); }
+  transform (func) { 
+    func(this.mesh); 
+    this.original = jQuery.extend(true, {}, this.mesh);  
+    updateShapeVertices(this.gl, this.gl_shape, this.mesh.vertices);
+    updateShapeNormals(this.gl, this.gl_shape, this.mesh.normals);
+  }
 }
 
 class PObject {
