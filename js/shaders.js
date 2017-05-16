@@ -1,6 +1,7 @@
 const ENABLE_TEXTURES = false;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
-var program;
+
+var programs = [];
 
 function initializeWebGL(canvas) {
     var gl = null;
@@ -197,46 +198,6 @@ function pointerSetup(gl, canvas, camera) {
 
 }
 
-
-function createShader(gl, shaderScriptId) {
-    var shaderScript = $("#" + shaderScriptId);
-    var shaderSource = shaderScript[0].text;
-    var shaderType = null;
-    if (shaderScript[0].type == "x-shader/x-vertex") {
-        shaderType = gl.VERTEX_SHADER;
-    } else if (shaderScript[0].type == "x-shader/x-fragment") {
-        shaderType = gl.FRAGMENT_SHADER;
-    } else {
-        throw new Error("Invalid shader type: " + shaderScript[0].type)
-    }
-    const shader = gl.createShader(shaderType);
-    gl.shaderSource(shader, shaderSource);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var infoLog = gl.getShaderInfoLog(shader);
-        gl.deleteShader(shader);
-        throw new Error("An error occurred compiling the shader: " + infoLog);
-    } else {
-        return shader;
-    }
-}
-
-
-function createGlslProgram(gl, vertexShaderId, fragmentShaderId) {
-    const program = gl.createProgram();
-    gl.attachShader(program, createShader(gl, vertexShaderId));
-    gl.attachShader(program, createShader(gl, fragmentShaderId));
-    gl.linkProgram(program);
-    gl.validateProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        var infoLog = gl.getProgramInfoLog(program);
-        gl.deleteProgram(program);
-        throw new Error("An error occurred linking the program: " + infoLog);
-    } else {
-        return program;
-    }
-}
-
 function createShape(gl, data) {
     var shape = {};
     shape.vertexBuffer = gl.createBuffer();
@@ -282,10 +243,8 @@ function updateShapeFillColor(shape, color){
     shape.fillColor = color;
 }
 
-function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) {
-    
-    gl.useProgram(program);
-    
+function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) 
+{
     const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
@@ -323,7 +282,7 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     const particleLocation = gl.getUniformLocation(program, "particle");
     gl.uniform1i(particleLocation, +particles);
 
-    if (ENABLE_TEXTURES){
+    if (ENABLE_TEXTURES && texture){
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -343,8 +302,6 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
     gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-    gl.useProgram(null);
 }
 
 function updateVisualizer(viz, time) {
@@ -382,7 +339,7 @@ function updateVisualizer(viz, time) {
     // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-    viz.gl.useProgram(program);
+    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
 
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
@@ -390,33 +347,12 @@ function updateVisualizer(viz, time) {
     var cameraMatrix = mat4.create();
     mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
 
-    //var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
-    //vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
-    //mat4.lookAt(cameraMatrix, pos, to, up);
-
-    // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
-    
     var normalMatrix = mat4.create();    
     mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
 
-    var lights = { 
-        positions: [
-            viz.camera.viewPoint[0] - 10*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 10*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 10*viz.camera.viewDir[2],
-            0,5,0,
-            4.0,0.0,3.0,
-            -4,0,3,
-        ], 
-        colors: [
-            800,800,800,
-            viz.lightHigh()*300,viz.lightHigh()*300,viz.lightHigh()*300,
-            viz.lightKick()*20,0,0,
-            0,0,viz.lightMid()*20,
-        ],
-    };
+    var lights = getLights(viz);
 
     viz.clearColor = viz.bgColor.map(color => 3*viz.lightHigh()*color);
     
@@ -438,6 +374,24 @@ function updateVisualizer(viz, time) {
     viz.lastKick = viz.lightKick();
 }
 
+function getLights(viz)
+{
+    return { 
+        positions: [
+            viz.camera.viewPoint[0] - 10*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 10*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 10*viz.camera.viewDir[2],
+            0,5,0,
+            4.0,0.0,3.0,
+            -4,0,3,
+        ], 
+        colors: [
+            800,800,800,
+            viz.lightHigh()*300,viz.lightHigh()*300,viz.lightHigh()*300,
+            viz.lightKick()*20,0,0,
+            0,0,viz.lightMid()*20,
+        ],
+    };
+}
+
 /**
  * @return a Promise that resolves once
  * the vizualizer has been initialized
@@ -446,8 +400,6 @@ const initVisualizer = (viz) => {
 
     viz.gl.depthFunc(viz.gl.LESS);
     viz.gl.enable(viz.gl.DEPTH_TEST);
-
-    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
 
     // Bind the texture
     if (ENABLE_TEXTURES){
@@ -468,4 +420,65 @@ const initVisualizer = (viz) => {
 
 }
 
+function getProgram(viz, vertName, fragName)
+{
+    var name = vertName+'_'+fragName;
+    if (!(name in programs)) { 
+        var program = createProgram(viz, vertName, fragName);
+        program.name = name; programs[name] = program;
+    }        
+    return programs[name];
+};
 
+function createProgram(viz, vertName, fragName) 
+{        
+    var gl = viz.gl; 
+    var vertexShaderId = vertName+"_vertex_program";
+    var fragmentShaderId = fragName+"_fragment_program";
+
+    var program = gl.createProgram();
+
+    gl.attachShader(program, createShader(viz, vertexShaderId));
+    gl.attachShader(program, createShader(viz, fragmentShaderId));
+    gl.linkProgram(program);
+    gl.validateProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        var infoLog = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error("An error occurred linking the program: " + infoLog);
+    } else {
+        return program;
+    }
+};
+
+function createShader(viz, shaderScriptId) 
+{        
+    var gl = viz.gl;
+
+    var shaderScript = $("#"+shaderScriptId);
+    var shaderSource = shaderScript[0].text;
+
+    if (shaderScript.data('include')) { shaderSource = $('#'+shaderScript.data('include')).text() + shaderSource; }
+
+    var shaderType = null;
+    if (shaderScript[0].type === "x-shader/x-vertex") {
+        shaderType = gl.VERTEX_SHADER;
+    } else if (shaderScript[0].type === "x-shader/x-fragment") {
+        shaderType = gl.FRAGMENT_SHADER;
+    } else {
+        throw new Error("Invalid shader type: " + shaderScript[0].type)
+    }
+
+    var shader = gl.createShader(shaderType);
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        var infoLog = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("An error occurred compiling the shader: " + infoLog);
+    } else {
+        return shader;
+    }
+};

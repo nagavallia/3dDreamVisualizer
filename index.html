@@ -122,7 +122,7 @@
 <script src="http://k3d.ivank.net/K3D.js"></script>
 
 
-<script id="vertexShader" type="x-shader/x-vertex">
+<script id="main_vertex_program" type="x-shader/x-vertex">
 
     uniform bool use_textures;
     uniform bool particle;
@@ -157,7 +157,7 @@
 
 </script>
 
-<script id="fragmentShader" type="x-shader/x-fragment">
+<script id="main_fragment_program" type="x-shader/x-fragment">
 
     precision highp float;
 
@@ -211,6 +211,36 @@
     }
 
 </script>
+
+<script id="skybox_vertex_program" type="x-shader/x-vertex">
+
+uniform mat4 projectionMatrix;
+uniform mat4 cameraMatrix;
+
+attribute vec3 position;
+varying vec3 fPosition;
+
+void main() {
+    fPosition = position;
+    gl_Position = projectionMatrix * cameraMatrix * vec4(position, 1.0);
+}
+
+</script>
+
+<script id="skybox_fragment_program" type="x-shader/x-fragment">
+    
+precision highp float;
+
+uniform samplerCube skyboxTexture;
+uniform float exposure;
+varying vec3 fPosition;
+
+void main() { 
+    gl_FragColor = vec4(textureCube(skyboxTexture, fPosition).rgb * exposure, 1.0);
+}
+
+</script>
+
 <script src="js/visualizer.js"></script>
 <script src="js/helpers.js"></script>
 <script src="js/particles.js"></script>
