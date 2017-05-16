@@ -1,6 +1,7 @@
 const ENABLE_TEXTURES = false;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
-var program;
+
+var programs = [];
 
 function initializeWebGL(canvas) {
     var gl = null;
@@ -126,69 +127,40 @@ function pointerSetup(gl, canvas, camera) {
 
 }
 
-
-function createShader(gl, shaderScriptId) {
-    var shaderScript = $("#" + shaderScriptId);
-    var shaderSource = shaderScript[0].text;
-    var shaderType = null;
-    if (shaderScript[0].type == "x-shader/x-vertex") {
-        shaderType = gl.VERTEX_SHADER;
-    } else if (shaderScript[0].type == "x-shader/x-fragment") {
-        shaderType = gl.FRAGMENT_SHADER;
-    } else {
-        throw new Error("Invalid shader type: " + shaderScript[0].type)
-    }
-    const shader = gl.createShader(shaderType);
-    gl.shaderSource(shader, shaderSource);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var infoLog = gl.getShaderInfoLog(shader);
-        gl.deleteShader(shader);
-        throw new Error("An error occurred compiling the shader: " + infoLog);
-    } else {
-        return shader;
-    }
-}
-
-
-function createGlslProgram(gl, vertexShaderId, fragmentShaderId) {
-    const program = gl.createProgram();
-    gl.attachShader(program, createShader(gl, vertexShaderId));
-    gl.attachShader(program, createShader(gl, fragmentShaderId));
-    gl.linkProgram(program);
-    gl.validateProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        var infoLog = gl.getProgramInfoLog(program);
-        gl.deleteProgram(program);
-        throw new Error("An error occurred linking the program: " + infoLog);
-    } else {
-        return program;
-    }
-}
-
 function createShape(gl, data) {
     var shape = {};
+    
+    if (!('normals' in data)) { console.log('AAA', new Float32Array(data.vertices), new Uint16Array(data.triInd)); }
+    
     shape.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
     shape.triIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.triInd), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    shape.normBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineLen = data.lineInd.length;
+    
+    if ('normals' in data) {
+        shape.normBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('uvs' in data) {
+        shape.uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('lineInd' in data) {
+        shape.lineIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); 
+        shape.lineLen = data.lineInd.length; }    
+    
     shape.triLen = data.triInd.length;
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
@@ -201,10 +173,22 @@ function updateShapeVertices(gl, shape, verts){
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
-function drawShape(gl, shape, program, transforms, lights, texture = null) {
+function createSkybox(gl, size)
+{
+    var vertices = []; var indexes = [];
+
+    vertices.push(-size,-size,size, size,-size,size, size,size,size, -size,size,size, -size,-size,-size, size,-size,-size, size,size,-size, -size,size,-size);
+    indexes.push(4,0,7, 7,0,3, 0,1,3, 3,1,2, 1,5,2, 2,5,6, 5,4,6, 6,4,7, 0,2,7, 7,2,6, 4,5,0, 0,5,1);
+
+    var data = { vertices: vertices, triInd: indexes }; 
     
-    gl.useProgram(program);
+    console.log('CREATE SKYBOX',data);
     
+    return createShape(gl, data);
+}
+
+function drawShape(gl, shape, program, transforms, lights, texture = null)
+{    
     const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
@@ -239,7 +223,8 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     const useTexsLocation = gl.getUniformLocation(program, "use_textures");
     gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
 
-    if (ENABLE_TEXTURES){
+    if (texture){
+        console.log("drawing with texture?");
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -255,12 +240,48 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
     // draw lines on shape last
-    gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if ('lineIndexBuffer' in shape) {
+        gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); }
+}
 
-    gl.useProgram(null);
+var drawn = false;
+
+function drawSkybox(viz, gl, program, transforms)
+{
+    const exposure = 1.0; gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, viz.skyboxShape.vertexBuffer);
+    const positionLocation = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    
+    var cameraMatrix = mat4.create();
+    mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);    
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
+        
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
+    gl.uniform1i(gl.getUniformLocation(program,'skyboxTexture'), 0);
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, viz.skyboxShape.triIndexBuffer);
+    gl.drawElements(gl.TRIANGLES, viz.skyboxShape.triLen, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
+    if (!drawn)
+    {
+        console.log(viz); 
+        console.log(gl); 
+        console.log(program); 
+        console.log(transforms);
+        console.log(viz.skyboxShape);
+        console.log(viz.skyboxCubemap);
+        console.log(cameraMatrix);
+        drawn = true;
+    }
 }
 
 function updateVisualizer(viz, time) {
@@ -272,31 +293,38 @@ function updateVisualizer(viz, time) {
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     };
 
-    // Draw sky
-    viz.gl.clearColor(...viz.clearColor, 0);
-    viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-    viz.gl.useProgram(program);
-
+    var program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
+    
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
     var cameraMatrix = mat4.create();
     mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
-
-    //var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
-    //vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
-    //mat4.lookAt(cameraMatrix, pos, to, up);
-
-    // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
     
-    var normalMatrix = mat4.create();    
-    mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
+    var normalMatrix = mat4.create(); mat4.copy(normalMatrix, cameraMatrix); 
+    mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
     
-    var lights = { 
+    var lights = getLights(viz);
+
+    viz.clearColor = [viz.lightHigh()+0.5, viz.lightHigh()+0.5, viz.lightHigh()+0.5, 0];
+    viz.gl.clearColor(...viz.clearColor, 0);
+    viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
+    
+    for (var i = 0; i < viz.objects.length; i++) {
+        drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
+            ENABLE_TEXTURES ? wallTexture : null);
+    };
+    
+    program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
+    drawSkybox(viz, viz.gl, program, transforms);        
+    viz.gl.useProgram(null);
+}
+
+function getLights(viz)
+{
+    return { 
         positions: [
             0,-1.0,5.0,
             4.0,0.0,3.0,
@@ -310,15 +338,6 @@ function updateVisualizer(viz, time) {
             30,30,30,
         ],
     };
-
-    viz.clearColor = [viz.lightHigh(), viz.lightHigh(), viz.lightHigh(), 0];
-    
-    for (var i = 0; i < viz.objects.length; i++) {
-        drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
-            ENABLE_TEXTURES ? wallTexture : null);
-    };
-
-    viz.gl.useProgram(null);
 }
 
 /**
@@ -329,8 +348,6 @@ const initVisualizer = (viz) => {
 
     viz.gl.depthFunc(viz.gl.LESS);
     viz.gl.enable(viz.gl.DEPTH_TEST);
-
-    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
 
     // Bind the texture
     if (ENABLE_TEXTURES){
@@ -349,6 +366,68 @@ const initVisualizer = (viz) => {
         viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
     }
 
+    const size = 1000; viz.skyboxShape = createSkybox(viz.gl, size);
 }
 
+function getProgram(viz, vertName, fragName)
+{
+    var name = vertName+'_'+fragName;
+    if (!(name in programs)) { 
+        var program = createProgram(viz, vertName, fragName);
+        program.name = name; programs[name] = program;
+    }        
+    return programs[name];
+};
 
+function createProgram(viz, vertName, fragName) 
+{        
+    var gl = viz.gl; 
+    var vertexShaderId = vertName+"_vertex_program";
+    var fragmentShaderId = fragName+"_fragment_program";
+
+    var program = gl.createProgram();
+
+    gl.attachShader(program, createShader(viz, vertexShaderId));
+    gl.attachShader(program, createShader(viz, fragmentShaderId));
+    gl.linkProgram(program);
+    gl.validateProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        var infoLog = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error("An error occurred linking the program: " + infoLog);
+    } else {
+        return program;
+    }
+};
+
+function createShader(viz, shaderScriptId) 
+{        
+    var gl = viz.gl;
+
+    var shaderScript = $("#"+shaderScriptId);
+    var shaderSource = shaderScript[0].text;
+
+    if (shaderScript.data('include')) { shaderSource = $('#'+shaderScript.data('include')).text() + shaderSource; }
+
+    var shaderType = null;
+    if (shaderScript[0].type === "x-shader/x-vertex") {
+        shaderType = gl.VERTEX_SHADER;
+    } else if (shaderScript[0].type === "x-shader/x-fragment") {
+        shaderType = gl.FRAGMENT_SHADER;
+    } else {
+        throw new Error("Invalid shader type: " + shaderScript[0].type)
+    }
+
+    var shader = gl.createShader(shaderType);
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        var infoLog = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("An error occurred compiling the shader: " + infoLog);
+    } else {
+        return shader;
+    }
+};

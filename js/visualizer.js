@@ -17,7 +17,7 @@ class SteveMarschnersDreamVisualizer {
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
     this.animation_i = 0.0;
-    this.clearColor = [0.1, 0.1, 0.2, 0.0]
+    //this.clearColor = [0.1, 0.1, 0.2, 0.0]
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
@@ -43,16 +43,22 @@ class SteveMarschnersDreamVisualizer {
     const iHigh = () => this.bandan.getFrequencyValue(18000)
     const iTime = () => this.animation_i
 
-    this.lightHigh = () => this.bandan.getFrequencyValue(18000)
-    this.lightKick = () => this.bandan.getFrequencyValue(22)
-    this.lightMid = () => this.bandan.getFrequencyValue(4000)
+    this.lightHigh = () => this.bandan.getFrequencyValue(16000)
+    this.lightKick = () => this.bandan.getFrequencyValue(40)
+    this.lightMid = () => this.bandan.getFrequencyValue(500)
 
     return Promise.resolve(new ResourceLoader(this))
       // audio buffer needs to be loaded to 'audio', also load meshes and textures
       .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
       // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
-      .then(loader => loader.loadImage('earthImage', 'data/earth.png'))
-      .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
+      .then(loader => loader.loadImage('earthImage', 'earth.png'))
+      .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))      
+      .then(loader => loader.loadImage('skyboxX0', 'skybox/+X.png'))
+      .then(loader => loader.loadImage('skyboxX1', 'skybox/-X.png'))
+      .then(loader => loader.loadImage('skyboxY0', 'skybox/+Y.png'))
+      .then(loader => loader.loadImage('skyboxY1', 'skybox/-Y.png'))
+      .then(loader => loader.loadImage('skyboxZ0', 'skybox/+Z.png'))
+      .then(loader => loader.loadImage('skyboxZ1', 'skybox/-Z.png'))
       
       // things have been loaded 
       .then(_ => {
@@ -130,7 +136,6 @@ class SteveMarschnersDreamVisualizer {
         ])
         this.objects.push(kick_sphere2)
 
-
         // const time_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
         // time_sphere.animation = new Animation(time_sphere, iTime);
         // time_sphere.animation.addSequence([
@@ -142,6 +147,20 @@ class SteveMarschnersDreamVisualizer {
         //   anim.translate(0,2,0)
         // ])
         // this.objects.push(time_sphere)
+        
+        var gl = this.gl;
+        var cubemap = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemap);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxX0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxY0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxZ0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxX1);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxY1);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxZ1);
+        gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+        this.skyboxCubemap = cubemap;
 
       })
       .then(_ => initVisualizer(this))
