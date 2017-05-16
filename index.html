@@ -107,8 +107,8 @@
 
     <ul>
         <li>Joseph Marino (jnm92)</li>
-        <li>Arnesh</li>
-        <li>Kevin</li>
+        <li>Arnesh Nagavalli (amn79)</li>
+        <li>Kevin Hernandez Chavez (keh222)</li>
         <li>Ray Beck (rhb263)</li>
     </ul>
 </div>
@@ -236,8 +236,7 @@ uniform float exposure;
 varying vec3 fPosition;
 
 void main() { 
-    //gl_FragColor = vec4(textureCube(skyboxTexture, fPosition).rgb * exposure, 1.0);
-    gl_FragColor = vec4(1.0);
+    gl_FragColor = vec4(textureCube(skyboxTexture, fPosition).rgb * exposure, 1.0);
 }
 
 </script>

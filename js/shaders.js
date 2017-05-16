@@ -321,10 +321,11 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
     // draw lines on shape last
-    gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if ('lineIndexBuffer' in shape) {
+        gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); }
 }
 
 var drawn = false;
@@ -340,7 +341,8 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     
     var cameraMatrix = mat4.create();
-    mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);    
+    mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);   
+    //var cameraMatrix = transforms.camera;
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
         
@@ -398,7 +400,7 @@ function updateVisualizer(viz, time) {
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
    
-    var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
+    var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 2000.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
     var cameraMatrix = mat4.create();
@@ -411,7 +413,7 @@ function updateVisualizer(viz, time) {
     
     var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
     
-    drawSkybox(viz, viz.gl, program, transforms, viz.lightMid());        
+    drawSkybox(viz, viz.gl, program, transforms, viz.lightMid()*0.5 + 0.5);        
 
     program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
 
