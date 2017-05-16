@@ -30,7 +30,7 @@ class ResourceLoader {
  */
 const loadAudio = (context, name) => new Promise((res, rej) => {
   const request = new XMLHttpRequest()
-  request.open("GET", "data/"+name, true)
+  request.open("GET", name, true)
   request.responseType = "arraybuffer"
   request.onerror = () => alert('BufferLoader: XHR error');
   

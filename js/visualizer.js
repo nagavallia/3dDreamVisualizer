@@ -114,7 +114,7 @@ class SteveMarschnersDreamVisualizer {
     
     return Promise.resolve(new ResourceLoader(this))
         // audio buffer needs to be loaded to 'audio', also load meshes and textures
-        .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
+        .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
         .then(loader => loader.loadImage('earthImage', 'earth.png'))
         .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
         .then(loader => loader.loadImage('skyboxX0', 'skybox/+X.png'))
