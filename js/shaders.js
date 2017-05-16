@@ -130,8 +130,6 @@ function pointerSetup(gl, canvas, camera) {
 function createShape(gl, data) {
     var shape = {};
     
-    if (!('normals' in data)) { console.log('AAA', new Float32Array(data.vertices), new Uint16Array(data.triInd)); }
-    
     shape.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertices), gl.STATIC_DRAW);
@@ -164,6 +162,9 @@ function createShape(gl, data) {
     shape.triLen = data.triInd.length;
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
+    
+    if (!('normals' in data)) { console.log('CREATE SKYBOX SHAPE', shape); }
+    
     return shape;
 }
 
@@ -224,7 +225,6 @@ function drawShape(gl, shape, program, transforms, lights, texture = null)
     gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
 
     if (texture){
-        console.log("drawing with texture?");
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -249,9 +249,9 @@ function drawShape(gl, shape, program, transforms, lights, texture = null)
 
 var drawn = false;
 
-function drawSkybox(viz, gl, program, transforms)
+function drawSkybox(viz, gl, program, transforms, exposure)
 {
-    const exposure = 1.0; gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
     
     gl.bindBuffer(gl.ARRAY_BUFFER, viz.skyboxShape.vertexBuffer);
     const positionLocation = gl.getAttribLocation(program, "position");
@@ -273,13 +273,13 @@ function drawSkybox(viz, gl, program, transforms)
     
     if (!drawn)
     {
-        console.log(viz); 
-        console.log(gl); 
-        console.log(program); 
-        console.log(transforms);
-        console.log(viz.skyboxShape);
-        console.log(viz.skyboxCubemap);
-        console.log(cameraMatrix);
+        console.log('VIZ', viz); 
+        console.log('GL', gl); 
+        console.log('PROGRAM', program); 
+        console.log('PROJECTION', transforms.projection);
+        console.log('CAMERA', cameraMatrix);
+        console.log('SHAPE', viz.skyboxShape);
+        console.log('TEX', viz.skyboxCubemap);
         drawn = true;
     }
 }
@@ -293,8 +293,6 @@ function updateVisualizer(viz, time) {
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
     };
 
-    var program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
-    
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
@@ -306,9 +304,14 @@ function updateVisualizer(viz, time) {
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
     
+    var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
+    
+    drawSkybox(viz, viz.gl, program, transforms, viz.lightMid());        
+
+    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
+    
     var lights = getLights(viz);
 
-    viz.clearColor = [viz.lightHigh()+0.5, viz.lightHigh()+0.5, viz.lightHigh()+0.5, 0];
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
     
@@ -316,10 +319,6 @@ function updateVisualizer(viz, time) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
             ENABLE_TEXTURES ? wallTexture : null);
     };
-    
-    program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
-    drawSkybox(viz, viz.gl, program, transforms);        
-    viz.gl.useProgram(null);
 }
 
 function getLights(viz)
