@@ -113,19 +113,18 @@ class SteveMarschnersDreamVisualizer {
     this.lastKick = 0;
     
     return Promise.resolve(new ResourceLoader(this))
-      // audio buffer needs to be loaded to 'audio', also load meshes and textures
-      .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
-      // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
-      .then(loader => loader.loadImage('earthImage', 'earth.png'))
-      .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
-      .then(loader => loader.loadImage('skyboxX0', 'skybox/+X.png'))
-      .then(loader => loader.loadImage('skyboxX1', 'skybox/-X.png'))
-      .then(loader => loader.loadImage('skyboxY0', 'skybox/+Y.png'))
-      .then(loader => loader.loadImage('skyboxY1', 'skybox/-Y.png'))
-      .then(loader => loader.loadImage('skyboxZ0', 'skybox/+Z.png'))
-      .then(loader => loader.loadImage('skyboxZ1', 'skybox/-Z.png'))
-      // things have been loaded 
-      .then(_ => {
+        // audio buffer needs to be loaded to 'audio', also load meshes and textures
+        .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
+        .then(loader => loader.loadImage('earthImage', 'earth.png'))
+        .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
+        .then(loader => loader.loadImage('skyboxX0', 'skybox/+X.png'))
+        .then(loader => loader.loadImage('skyboxX1', 'skybox/-X.png'))
+        .then(loader => loader.loadImage('skyboxY0', 'skybox/+Y.png'))
+        .then(loader => loader.loadImage('skyboxY1', 'skybox/-Y.png'))
+        .then(loader => loader.loadImage('skyboxZ0', 'skybox/+Z.png'))
+        .then(loader => loader.loadImage('skyboxZ1', 'skybox/-Z.png'))
+        // things have been loaded 
+        .then(_ => {
 
         const color1 = {
           texture: this.earthImage,
@@ -208,7 +207,7 @@ class SteveMarschnersDreamVisualizer {
 
         const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
         globe.transform(transform.scale(-20))
-        this.objects.push(globe)
+        //this.objects.push(globe)
 
         // /** Another sphere */
         // const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])

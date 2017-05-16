@@ -187,44 +187,67 @@ function pointerSetup(gl, canvas, camera) {
     canvas.addEventListener("click",fullscreen)
     document.addEventListener('webkitfullscreenchange', exitfullscreen, false);
     document.addEventListener('mozfullscreenchange', exitfullscreen, false);
-    document.addEventListener("fullscreenchange", exitfullscreen, false );
- 
-    
+    document.addEventListener("fullscreenchange", exitfullscreen, false );   
 
     // pointer lock event listeners
     // Hook pointer lock state change events for different browsers
     document.addEventListener('pointerlockchange', lockChangeAlert, false);
     document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-
 }
 
 function createShape(gl, data) {
     var shape = {};
+    
     shape.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
     shape.triIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.triInd), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    shape.normBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineLen = data.lineInd.length;
+    
+    if ('normals' in data) {
+        shape.normBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('uvs' in data) {
+        shape.uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('lineInd' in data) {
+        shape.lineIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); 
+        shape.lineLen = data.lineInd.length; }    
+    
     shape.triLen = data.triInd.length;
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
+    
+    if (!('normals' in data)) { console.log('CREATE SKYBOX SHAPE', shape); }
+    
     return shape;
+}
+
+function createSkybox(gl, size)
+{
+    var vertices = []; var indexes = [];
+
+    vertices.push(-size,-size,size, size,-size,size, size,size,size, -size,size,size, -size,-size,-size, size,-size,-size, size,size,-size, -size,size,-size);
+    indexes.push(4,0,7, 7,0,3, 0,1,3, 3,1,2, 1,5,2, 2,5,6, 5,4,6, 6,4,7, 0,2,7, 7,2,6, 4,5,0, 0,5,1);
+
+    var data = { vertices: vertices, triInd: indexes }; 
+    
+    console.log('CREATE SKYBOX',data);
+    
+    return createShape(gl, data);
 }
 
 function updateShapeVertices(gl, shape, verts){
@@ -304,6 +327,43 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
+var drawn = false;
+
+function drawSkybox(viz, gl, program, transforms, exposure)
+{
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, viz.skyboxShape.vertexBuffer);
+    const positionLocation = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    
+    var cameraMatrix = mat4.create();
+    mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);    
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
+        
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
+    gl.uniform1i(gl.getUniformLocation(program,'skyboxTexture'), 0);
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, viz.skyboxShape.triIndexBuffer);
+    gl.drawElements(gl.TRIANGLES, viz.skyboxShape.triLen, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
+    if (!drawn)
+    {
+        console.log('VIZ', viz); 
+        console.log('GL', gl); 
+        console.log('PROGRAM', program); 
+        console.log('PROJECTION', transforms.projection);
+        console.log('CAMERA', cameraMatrix);
+        console.log('SHAPE', viz.skyboxShape);
+        console.log('TEX', viz.skyboxCubemap);
+        drawn = true;
+    }
+}
+
 function updateVisualizer(viz, time) {
 
     for (var i = 0; i < viz.objects.length; i++) {
@@ -313,7 +373,6 @@ function updateVisualizer(viz, time) {
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
         updateShapeNormals(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.normals);
     };
-
 
     var survivors = []
     for (var i = 0; i < viz.particles.length; i++){
@@ -336,11 +395,9 @@ function updateVisualizer(viz, time) {
         }
     }
 
-    // Draw sky
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
-
+   
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
@@ -351,6 +408,12 @@ function updateVisualizer(viz, time) {
     mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
+    
+    var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
+    
+    drawSkybox(viz, viz.gl, program, transforms, viz.lightMid());        
+
+    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
 
     var lights = getLights(viz);
 
@@ -418,6 +481,7 @@ const initVisualizer = (viz) => {
         viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
     }
 
+    const size = 1000; viz.skyboxShape = createSkybox(viz.gl, size);
 }
 
 function getProgram(viz, vertName, fragName)
