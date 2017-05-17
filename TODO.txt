@@ -1,11 +1,3 @@
-SKYBOX
-
-smooth keyboard camera movement
-
-orbit mode
-
-fixed camera modes (to num keys)
-
 change song from webpage
 
 debug mode (runs from 0 to 1 on all animations)
