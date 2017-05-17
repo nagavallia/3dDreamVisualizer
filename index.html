@@ -77,7 +77,7 @@
                     <input type="checkbox" name="mesh" value="sphere.obj" checked>Sphere<br>
                 </td>
             </tr>
-                        <tr>
+                        <!--<tr>
                 <td colspan="2">
                     <span>Background Color:</span>
                 </td>
@@ -97,7 +97,7 @@
                     <span style="width:99%; display: block">Click to choose custom color:</span>
                     <input type="color" id="bgColorPicker" name="color" style="width: 40%; height: 60px">
                 </td>
-            </tr>
+            </tr>-->
             <tr>
                 <td style="width: 48%">Look sensitivity</td>
                 <td style="width: 48%"><div id="lookSlider"></div></td>
@@ -109,13 +109,7 @@
             <tr>
                 <td style="width: 48%">Invert Vertical Look</td>
                 <td style="width: 48%">
-                    <input type="checkbox" name="invertlook" id="invertLook"><br>
-                </td>
-            </tr>
-            <tr>
-                <td style="width: 48%">Invert Horizontal Look</td>
-                <td style="width: 48%">
-                    <input type="checkbox" name="inverthoriz" id="invertHoriz"><br>
+                    <input type="checkbox" name="invertLook" id="invertLook"><br>
                 </td>
             </tr>
         </table>
@@ -130,7 +124,7 @@
         <li>Arnesh Nagavalli (amn79)</li>
         <li>Kevin Hernandez Chavez (keh222)</li>
         <li>Ray Beck (rhb263)</li>
-    </ul>
+    </ul><br />
 </div>
 
 
@@ -213,8 +207,7 @@
             vec3 H = normalize(L + V);
 
             vec3 diffuseColor = use_textures ? texture2D(texture, frag_texCoord).rgb : color;
-            vec3 specularColor = vec3(0.5); // TODO actual specular colors?         
-            
+            vec3 specularColor = vec3(0.5);
 
             vec3 Idiff;
             if (particle){
