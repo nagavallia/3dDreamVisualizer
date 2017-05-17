@@ -231,8 +231,6 @@ function createShape(gl, data) {
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
     
-    if (!('normals' in data)) { console.log('CREATE SKYBOX SHAPE', shape); }
-    
     return shape;
 }
 
@@ -244,8 +242,6 @@ function createSkybox(gl, size)
     indexes.push(4,0,7, 7,0,3, 0,1,3, 3,1,2, 1,5,2, 2,5,6, 5,4,6, 6,4,7, 0,2,7, 7,2,6, 4,5,0, 0,5,1);
 
     var data = { vertices: vertices, triInd: indexes }; 
-    
-    console.log('CREATE SKYBOX',data);
     
     return createShape(gl, data);
 }
@@ -320,15 +316,12 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-    // draw lines on shape last
     if ('lineIndexBuffer' in shape) {
         gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
         gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); }
 }
-
-var drawn = false;
 
 function drawSkybox(viz, gl, program, transforms, exposure)
 {
@@ -340,9 +333,9 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     
-    var cameraMatrix = mat4.create();
-    mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);   
-    //var cameraMatrix = transforms.camera;
+    //var cameraMatrix = mat4.create();
+    //mat4.lookAt(cameraMatrix, vec3.create(), viz.camera.lookPoint, viz.camera.viewUp);   
+    var cameraMatrix = transforms.camera;
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
         
@@ -352,18 +345,6 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, viz.skyboxShape.triIndexBuffer);
     gl.drawElements(gl.TRIANGLES, viz.skyboxShape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    
-    if (!drawn)
-    {
-        console.log('VIZ', viz); 
-        console.log('GL', gl); 
-        console.log('PROGRAM', program); 
-        console.log('PROJECTION', transforms.projection);
-        console.log('CAMERA', cameraMatrix);
-        console.log('SHAPE', viz.skyboxShape);
-        console.log('TEX', viz.skyboxCubemap);
-        drawn = true;
-    }
 }
 
 function updateVisualizer(viz, time) {
@@ -413,7 +394,8 @@ function updateVisualizer(viz, time) {
     
     var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
     
-    drawSkybox(viz, viz.gl, program, transforms, viz.lightMid()*0.5 + 0.5);        
+    var exposure = Math.max(0.5, viz.lightKick()) + 2*viz.lightHigh();
+    drawSkybox(viz, viz.gl, program, transforms, exposure);        
 
     program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
 

@@ -117,12 +117,12 @@ class SteveMarschnersDreamVisualizer {
         .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
         .then(loader => loader.loadImage('earthImage', 'earth.png'))
         .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
-        .then(loader => loader.loadImage('skyboxX0', 'skybox/+X.png'))
-        .then(loader => loader.loadImage('skyboxX1', 'skybox/-X.png'))
-        .then(loader => loader.loadImage('skyboxY0', 'skybox/+Y.png'))
-        .then(loader => loader.loadImage('skyboxY1', 'skybox/-Y.png'))
-        .then(loader => loader.loadImage('skyboxZ0', 'skybox/+Z.png'))
-        .then(loader => loader.loadImage('skyboxZ1', 'skybox/-Z.png'))
+        .then(loader => loader.loadImage('skyboxX0', 'skybox/galaxy+X.png'))
+        .then(loader => loader.loadImage('skyboxX1', 'skybox/galaxy-X.png'))
+        .then(loader => loader.loadImage('skyboxY0', 'skybox/galaxy+Y.png'))
+        .then(loader => loader.loadImage('skyboxY1', 'skybox/galaxy-Y.png'))
+        .then(loader => loader.loadImage('skyboxZ0', 'skybox/galaxy+Z.png'))
+        .then(loader => loader.loadImage('skyboxZ1', 'skybox/galaxy-Z.png'))
         // things have been loaded 
         .then(_ => {
 
