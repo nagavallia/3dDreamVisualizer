@@ -63,39 +63,37 @@
             </td>
         </tr>
         <tr>
-            <td style="">
+            <td>
                 <span>Choose Song:</span><br />
                 <input type="file" id="songChoice">
             </td>
-            <td style="" id="songInputs">
+            <td id="songInputs">
                 <form>
-                    <input type="radio" name="songname" value="songs/vollekraftvoraus.mp3" checked> Volle Kraft Voraus<br />
-                    <input type="radio" name="songname" value="songs/shooting_stars.mp3"> Shooting Stars<br />
+                    <input onclick="sel_builtin_audio(this.value)" type="radio" value="data/songs/vollekraftvoraus.mp3" checked> Volle Kraft Voraus<br />
+                    <input onclick="sel_builtin_audio(this.value)" type="radio" value="data/songs/shooting_stars.mp3"> Shooting Stars<br />
                     <input type="radio" id="customsong" name="songname" value="whoops"> Custom (use upload)&nbsp;<span id="selectedsong" style="color: grey"></span><br />
                 </form>
             </td>
-            <td style="">
-            <span>Add New Mesh:</span>
-                <input type="file" id="meshUpload">
-            </td>
-            <td style="" id="selectedMeshes">
+            <td>
                 <span>Enabled Meshes:</span><br />
                 <input type="checkbox" name="mesh" value="sphere.obj" checked> Sphere<br />
             </td>
+            <td>
+            </td>
         </tr>
         <tr>
-            <td style="">Mouse Look Sensitivity</td>
-            <td style=""><div id="lookSlider"></div></td>
-            <td style="">WASD Movement Speed</td>
-            <td style=""><div id="movementSlider"></div></td>
+            <td>Mouse Look Sensitivity</td>
+            <td><div id="lookSlider"></div></td>
+            <td>WASD Movement Speed</td>
+            <td><div id="movementSlider"></div></td>
         </tr>
         <tr>
-            <td style="">Invert Vertical Look</td>
-            <td style="">
+            <td>Invert Vertical Look</td>
+            <td>
               <input type="checkbox" name="invertlook" id="invertLook"><br />
             </td>
-            <td style="">Invert Horizontal Look</td>
-            <td style="">
+            <td>Invert Horizontal Look</td>
+            <td>
                 <input type="checkbox" name="inverthoriz" id="invertHoriz"><br />
             </td>
         </tr>
@@ -243,8 +241,6 @@ void main() {
 <script src="js/world_objects.js"></script>
 <script src="js/animation.js"></script>
 <script src="js/shaders.js"></script>
-
-
 <script src="js/audio.js"></script>
 <script src="js/index.js"></script>
 
