@@ -29,7 +29,7 @@ function pointerSetup(gl, canvas, camera) {
     const rotateCamera = (e) => {
         var sens = $("#lookSlider").slider("value");
         var invertVertVal = invertVert ? 1.0 : -1.0;
-        var invertHorizVal = -1.0;//invertHoriz ? 1.0 : -1.0;
+        var invertHorizVal = invertHoriz ? 1.0 : -1.0;
 
         //get angles of rotation
         var yRot = invertHorizVal*(sens/50)*(e.movementX/canvas.width)*2*Math.PI;
@@ -402,7 +402,7 @@ function updateVisualizer(viz, time) {
     viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
 
     invertVert = $("#invertLook")[0].checked;
-    //invertHoriz = $("#invertHoriz")[0].checked;
+    invertHoriz = $("#invertHoriz")[0].checked;
 
     if (viz.camera.moving) {
         viz.camera.frameCount++;

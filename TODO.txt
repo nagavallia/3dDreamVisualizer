@@ -1,21 +1,14 @@
-change song from webpage
-
-debug mode (runs from 0 to 1 on all animations)
 
 make webpage look nicer
 
-change inverted camera through webpage 
-
-support user uploaded meshes
+//support user uploaded meshes
 
 support user uploaded songs
-
-look into camera sensitivity options
 
 more default meshes
 
 textures! 
 
-animate normals (feasible?)
+//animate normals (feasible?)
 
-normal maps (low priority)
+//normal maps (low priority)
