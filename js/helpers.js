@@ -53,9 +53,9 @@ class ResourceLoader {
 /**
  * Loads an audio file to an audio context
  */
-const loadAudio = (context, path) => new Promise((res, rej) => {
+const loadAudio = (context, name) => new Promise((res, rej) => {
   const request = new XMLHttpRequest()
-  request.open("GET", path, true)
+  request.open("GET", name, true)
   request.responseType = "arraybuffer"
   request.onerror = () => alert('BufferLoader: XHR error');
 
@@ -63,7 +63,7 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
   request.onload = () => context
     .decodeAudioData(request.response,
       buffer => {
-        if (!buffer) rej('error decoding file data: ' + url)
+        if (!buffer) rej('error decoding file data: ' + name)
         else res(buffer)
       },
       error => rej(error)
@@ -72,9 +72,9 @@ const loadAudio = (context, path) => new Promise((res, rej) => {
 })
 
 
-const requestOBJFile = (filename) => new Promise((res, rej) => {
+const requestOBJFile = (name) => new Promise((res, rej) => {
     const request = new XMLHttpRequest();
-    request.open("GET", "data/"+filename, true);
+    request.open("GET", "data/"+name, true);
     request.responseType = "arraybuffer";
     request.onerror = () => rej("OBJ XHR error or something");
     request.onload = () => { res(request.response)};
@@ -82,9 +82,9 @@ const requestOBJFile = (filename) => new Promise((res, rej) => {
 })
 
 
-const loadImage = (url) => new Promise((res, rej) => {
+const loadImage = (name) => new Promise((res, rej) => {
     const img = new Image();
-    img.src = url
+    img.src = "data/"+name
     img.onload = () => res(img)
     img.onerror = () => rej("couldn't load image!")
 })

@@ -1,3 +1,22 @@
+/*********************************** jquery **********************************/
+var lookSlider = $("#lookSlider");
+
+lookSlider.slider({
+    min: 25,
+    max: 100,
+    value: 50
+});
+
+var movementSlider = $("#movementSlider");
+
+movementSlider.slider({
+    min: 0,
+    max: 23,
+    value: 15
+});
+
+var invertVert = $("#invertLook")[0].checked;
+//var invertHoriz = $("#invertHoriz")[0].checked;
 
 /*********************************** audio ***********************************/
 
@@ -20,15 +39,10 @@ const visualizer = new SteveMarschnersDreamVisualizer($("#webglCanvas")[0])
 visualizer
 .init()
 .then((viz) => {
-  playbutton.removeAttribute('disabled')
-  playbutton.innerHTML = 'Play/pause'
-  playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
-  document.addEventListener('keypress', (event) => {if (event.key == 'p'){ visualizer.togglePlayback() }})
-
-  // $("#slider").slider({ slide: function(event, ui) { console.log('play at', ui.value) } })
-  // $("#slider").slider('option', {min: 0, max: viz.duration })
-
-  // viz.playFromTag()
+  // playbutton.removeAttribute('disabled')
+  // playbutton.innerHTML = 'Play/pause'
+  // playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
+  document.addEventListener('keypress', (event) => {if (event.key == 'p'){ visualizer.togglePlayback() } else if (event.key == 'u'){ visualizer.explode()}})
 
 })
 .catch(console.error)

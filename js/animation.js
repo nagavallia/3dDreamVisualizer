@@ -13,6 +13,31 @@ const transform = {
         case 2: return v + z
   }})}),
 
+  rotate : (axis, amt = 1) => m => Object.assign(m, {
+    vertices : ([].concat.apply([], m.vertices.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
+          mat4.rotate(rot, rot, (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      }))),
+    normals : ([].concat.apply([], m.normals.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.normals[i], m.normals[i+1], m.normals[i+2],0);
+          mat4.rotate(rot, rot, (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      }))),
+    }),
+
 }
 
 // TODO it will be hard but we need to implement changing normals also in the animations
@@ -79,12 +104,51 @@ const anim = {
     return m
   },
 
-  rotate : (axis, amt = 1) => (m, t) => {
+  rotate : (axis, amt = 1, ignorenormals = false) => (m, t) => {
     m.vertices = ([].concat.apply([], m.vertices.map((_, i) => {
         if (i%3 == 0){
           var rot = mat4.create();
           var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
           mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      })))
+    if (! ignorenormals){
+      m.normals = ([].concat.apply([], m.normals.map((_, i) => {
+          if (i%3 == 0){
+            var rot = mat4.create();
+            var vert = vec4.fromValues(m.normals[i], m.normals[i+1], m.normals[i+2],0);
+            mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
+            vec4.transformMat4(vert, vert, rot);
+            return [vert[0], vert[1], vert[2]]
+          } else {
+            return []
+          }
+        })))
+    }
+    return m
+  },
+
+    rotateFixed : (axis, amt = 1) => (m, t) => {
+    m.vertices = ([].concat.apply([], m.vertices.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
+          mat4.rotate(rot, rot, (amt*Math.PI), axis);
+          vec4.transformMat4(vert, vert, rot);
+          return [vert[0], vert[1], vert[2]]
+        } else {
+          return []
+        }
+      })))
+    m.normals = ([].concat.apply([], m.normals.map((_, i) => {
+        if (i%3 == 0){
+          var rot = mat4.create();
+          var vert = vec4.fromValues(m.normals[i], m.normals[i+1], m.normals[i+2],0);
+          mat4.rotate(rot, rot, (amt*Math.PI), axis);
           vec4.transformMat4(vert, vert, rot);
           return [vert[0], vert[1], vert[2]]
         } else {

@@ -1,6 +1,7 @@
 const ENABLE_TEXTURES = false;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
-var program;
+
+var programs = [];
 
 function initializeWebGL(canvas) {
     var gl = null;
@@ -17,6 +18,7 @@ function initializeWebGL(canvas) {
 
 function pointerSetup(gl, canvas, camera) {
     // mouse lock stuff
+    
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock ||
@@ -25,71 +27,190 @@ function pointerSetup(gl, canvas, camera) {
     canvas.onclick = () => canvas.requestPointerLock()
 
     const rotateCamera = (e) => {
+        var sens = $("#lookSlider").slider("value");
+        var invertVertVal = invertVert ? 1.0 : -1.0;
+        var invertHorizVal = -1.0;//invertHoriz ? 1.0 : -1.0;
+
         //get angles of rotation
-        var xRot = -1.0*(e.movementX/canvas.width)*2*Math.PI;
-        var yRot = -1.0*(e.movementY/canvas.height)*2*Math.PI;
+        var yRot = invertHorizVal*(sens/50)*(e.movementX/canvas.width)*2*Math.PI;
+        var xRot = invertVertVal*(sens/50)*(e.movementY/canvas.height)*2*Math.PI;
 
-        //turn angles into quaternions
-        var xQuat = quat.create(); var yQuat = quat.create();
-        quat.setAxisAngle(xQuat, camera.basisV, xRot); quat.setAxisAngle(yQuat, camera.basisU, yRot);
+        var mRotX = mat4.create(); var mRotY = mat4.create();
+        mat4.fromXRotation(mRotX, xRot); mat4.fromYRotation(mRotY, yRot);
 
-        //apply quat rotation
-        vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
-        vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+        var R = mat4.create(); mat4.multiply(R, mRotY, mRotX);
+
+        if (camera.orbitMode) {
+            var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+            var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+            var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+
+            mat4.multiply(R, R, L);
+            mat4.multiply(R, LInv, R);
+            mat4.multiply(camera.cameraToWorld, camera.cameraToWorld, R);
+        }
+        else {
+            mat4.multiply(camera.cameraToWorld, camera.cameraToWorld, R);
+        }
 
         camera.updateBasis();
     }
 
     const keyboardCamera = (e) => {
+        e.preventDefault();
         switch (e.key) {
             case 'w':
-                var wMove = vec3.clone(camera.basisW); vec3.normalize(wMove, wMove); vec3.negate(wMove, wMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, wMove);
+                console.log(camera.MAX_FRAMES);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,0,-1);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'a':
-                var aMove = vec3.clone(camera.basisU); vec3.normalize(aMove, aMove); vec3.negate(aMove, aMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, aMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(-1,0,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 's':
-                var sMove = vec3.clone(camera.basisW); vec3.normalize(sMove, sMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, sMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,0,1);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'd':
-                var dMove = vec3.clone(camera.basisU); vec3.normalize(dMove, dMove); 
-                vec3.add(camera.viewPoint, camera.viewPoint, dMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(1,0,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'q':
-                var qRot = (1.0/40.0)*2*Math.PI;
-                var qQuat = quat.create(); quat.setAxisAngle(qQuat, camera.viewDir, qRot);
-                vec3.transformQuat(camera.viewUp, camera.viewUp, qQuat);
-                break;
+                if (!camera.moving) {
+                    var qRot = (1.0/40.0)*2*Math.PI;
+                    qRot *= 1/camera.MAX_FRAMES; 
+                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                    if (camera.orbitMode) {
+                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+            
+                        mat4.multiply(mRotZ, mRotZ, L);
+                        mat4.multiply(mRotZ, LInv, mRotZ);
+                    }
+                    camera.moveTrans = mRotZ;
+                    camera.moving = true;
+                }
+                    break;
             case 'e':
-                var eRot = -1.0*(1.0/40.0)*2*Math.PI;
-                var eQuat = quat.create(); quat.setAxisAngle(eQuat, camera.viewDir, eRot);
-                vec3.transformQuat(camera.viewUp, camera.viewUp, eQuat);
-                break;
+                if (!camera.moving) {
+                    var qRot = -1.0*(1.0/40.0)*2*Math.PI;
+                    qRot *= 1/camera.MAX_FRAMES; 
+                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                    if (camera.orbitMode) {
+                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+            
+                        mat4.multiply(mRotZ, mRotZ, L);
+                        mat4.multiply(mRotZ, LInv, mRotZ);
+                    }
+                    camera.moveTrans = mRotZ;
+                    camera.moving = true;
+                }
+                    break;
             case 'Shift':
-                var shiftMove = vec3.clone(camera.basisV); vec3.normalize(shiftMove, shiftMove); vec3.negate(shiftMove, shiftMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, shiftMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,-1,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case ' ': //space bar pressed
-                var spaceMove = vec3.clone(camera.basisV); vec3.normalize(spaceMove, spaceMove); 
-                vec3.add(camera.viewPoint, camera.viewPoint, spaceMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,1,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
+                break;
+            case 'f':
+                camera.orbitMode = !camera.orbitMode;
+                console.log(camera.orbitMode);
+                break;
+            case '1':
+                var viewPoint = vec3.fromValues(0.0,0.0,4.0);
+                var viewDir = vec3.fromValues(0.0,0.0,-4.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '2':
+                var viewPoint = vec3.fromValues(0.0,0.0,-4.0);
+                var viewDir = vec3.fromValues(0.0,0.0,4.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '3':
+                var viewPoint = vec3.fromValues(4.0,0.0,0.0);
+                var viewDir = vec3.fromValues(-4.0,0.0,0.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '4':
+                var viewPoint = vec3.fromValues(-4.0,0.0,0.0);
+                var viewDir = vec3.fromValues(4.0,0.0,0.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '5':
+                var viewPoint = vec3.fromValues(0.0,4.0,0.0);
+                var viewDir = vec3.fromValues(0.0,-4.0,0.0);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '6':
+                var viewPoint = vec3.fromValues(0.0,-4.0,0.0);
+                var viewDir = vec3.fromValues(0.0,4.0,0.0);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break; 
+            case '7':
+                var viewPoint = vec3.fromValues(11/1.3,15/1.3,16/1.3);
+                var viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break;
         }
         camera.updateBasis();
     }
+    
+    document.addEventListener("keydown", keyboardCamera, false);
 
     const lockChangeAlert = () => {
       if (document.pointerLockElement === canvas ||
           document.mozPointerLockElement === canvas) {
         console.log('The pointer lock status is now locked');
         document.addEventListener("mousemove", rotateCamera, false);
-        document.addEventListener("keydown", keyboardCamera, false)
+        //document.addEventListener("keydown", keyboardCamera, false)
       } else {
         console.log('The pointer lock status is now unlocked');
         document.removeEventListener("mousemove", rotateCamera, false);
-        document.removeEventListener("keydown", keyboardCamera, false);
+        //document.removeEventListener("keydown", keyboardCamera, false);
       }
     }
 
@@ -115,84 +236,63 @@ function pointerSetup(gl, canvas, camera) {
     canvas.addEventListener("click",fullscreen)
     document.addEventListener('webkitfullscreenchange', exitfullscreen, false);
     document.addEventListener('mozfullscreenchange', exitfullscreen, false);
-    document.addEventListener("fullscreenchange", exitfullscreen, false );
- 
-    
+    document.addEventListener("fullscreenchange", exitfullscreen, false );   
 
     // pointer lock event listeners
     // Hook pointer lock state change events for different browsers
     document.addEventListener('pointerlockchange', lockChangeAlert, false);
     document.addEventListener('mozpointerlockchange', lockChangeAlert, false);
-
-}
-
-
-function createShader(gl, shaderScriptId) {
-    var shaderScript = $("#" + shaderScriptId);
-    var shaderSource = shaderScript[0].text;
-    var shaderType = null;
-    if (shaderScript[0].type == "x-shader/x-vertex") {
-        shaderType = gl.VERTEX_SHADER;
-    } else if (shaderScript[0].type == "x-shader/x-fragment") {
-        shaderType = gl.FRAGMENT_SHADER;
-    } else {
-        throw new Error("Invalid shader type: " + shaderScript[0].type)
-    }
-    const shader = gl.createShader(shaderType);
-    gl.shaderSource(shader, shaderSource);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var infoLog = gl.getShaderInfoLog(shader);
-        gl.deleteShader(shader);
-        throw new Error("An error occurred compiling the shader: " + infoLog);
-    } else {
-        return shader;
-    }
-}
-
-
-function createGlslProgram(gl, vertexShaderId, fragmentShaderId) {
-    const program = gl.createProgram();
-    gl.attachShader(program, createShader(gl, vertexShaderId));
-    gl.attachShader(program, createShader(gl, fragmentShaderId));
-    gl.linkProgram(program);
-    gl.validateProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        var infoLog = gl.getProgramInfoLog(program);
-        gl.deleteProgram(program);
-        throw new Error("An error occurred linking the program: " + infoLog);
-    } else {
-        return program;
-    }
 }
 
 function createShape(gl, data) {
     var shape = {};
+    
     shape.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineIndexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    
     shape.triIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.triInd), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    shape.normBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.uvBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    shape.lineLen = data.lineInd.length;
+    
+    if ('normals' in data) {
+        shape.normBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('uvs' in data) {
+        shape.uvBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, null); }
+    
+    if ('lineInd' in data) {
+        shape.lineIndexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); 
+        shape.lineLen = data.lineInd.length; }    
+    
     shape.triLen = data.triInd.length;
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
+    
     return shape;
+}
+
+function createSkybox(gl, size)
+{
+    var vertices = []; var indexes = [];
+
+    vertices.push(-size,-size,size, size,-size,size, size,size,size, -size,size,size, -size,-size,-size, size,-size,-size, size,size,-size, -size,size,-size);
+    indexes.push(4,0,7, 7,0,3, 0,1,3, 3,1,2, 1,5,2, 2,5,6, 5,4,6, 6,4,7, 0,2,7, 7,2,6, 4,5,0, 0,5,1);
+
+    var data = { vertices: vertices, triInd: indexes }; 
+    
+    return createShape(gl, data);
 }
 
 function updateShapeVertices(gl, shape, verts){
@@ -201,10 +301,18 @@ function updateShapeVertices(gl, shape, verts){
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 }
 
-function drawShape(gl, shape, program, transforms, lights, texture = null) {
-    
-    gl.useProgram(program);
-    
+function updateShapeNormals(gl, shape, normals){
+    gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+}
+
+function updateShapeFillColor(shape, color){
+    shape.fillColor = color;
+}
+
+function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) 
+{
     const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
@@ -239,7 +347,10 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     const useTexsLocation = gl.getUniformLocation(program, "use_textures");
     gl.uniform1i(useTexsLocation, +ENABLE_TEXTURES);
 
-    if (ENABLE_TEXTURES){
+    const particleLocation = gl.getUniformLocation(program, "particle");
+    gl.uniform1i(particleLocation, +particles);
+
+    if (ENABLE_TEXTURES && texture){
         if (gl.getUniformLocation(program, "texture") != null) {
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -254,62 +365,103 @@ function drawShape(gl, shape, program, transforms, lights, texture = null) {
     gl.drawElements(gl.TRIANGLES, shape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
-    // draw lines on shape last
-    gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
-    gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+    if ('lineIndexBuffer' in shape) {
+        gl.uniform3fv(gl.getUniformLocation(program, "color"), shape.lineColor);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
+        gl.drawElements(gl.LINES, shape.lineLen, gl.UNSIGNED_SHORT, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); }
+}
 
-    gl.useProgram(null);
+function drawSkybox(viz, gl, program, transforms, exposure)
+{
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
+    
+    gl.bindBuffer(gl.ARRAY_BUFFER, viz.skyboxShape.vertexBuffer);
+    const positionLocation = gl.getAttribLocation(program, "position");
+    gl.enableVertexAttribArray(positionLocation);
+    gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    
+    var cameraMatrix = mat4.create(); 
+    var lookPoint = vec3.clone(viz.camera.lookPoint); 
+    vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
+    mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
+        
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
+    gl.uniform1i(gl.getUniformLocation(program,'skyboxTexture'), 0);
+    
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, viz.skyboxShape.triIndexBuffer);
+    gl.drawElements(gl.TRIANGLES, viz.skyboxShape.triLen, gl.UNSIGNED_SHORT, 0);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
 function updateVisualizer(viz, time) {
+    viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
+
+    invertVert = $("#invertLook")[0].checked;
+    //invertHoriz = $("#invertHoriz")[0].checked;
+
+    if (viz.camera.moving) {
+        viz.camera.frameCount++;
+        // console.log(viz.camera.moveVec + "   " + viz.camera.frameCount);
+        mat4.multiply(viz.camera.cameraToWorld, viz.camera.cameraToWorld, viz.camera.moveTrans);
+        viz.camera.updateBasis();
+        if (viz.camera.frameCount == viz.camera.MAX_FRAMES) {viz.camera.moving = false; viz.camera.frameCount = 0;}
+    }
 
     for (var i = 0; i < viz.objects.length; i++) {
         let object = viz.objects[i]
         if (!object.animation) continue;
         object.animation.update()
         updateShapeVertices(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.vertices);
+        updateShapeNormals(viz.gl, object.animation.aobject.gl_shape, object.animation.mesh.normals);
     };
 
-    // Draw sky
+    var survivors = []
+    for (var i = 0; i < viz.particles.length; i++){
+        let particle = viz.particles[i]
+        if (particle.update(time)){
+            updateShapeVertices(viz.gl, particle.gl_shape, particle.particle.mesh.vertices);
+            updateShapeFillColor(particle.gl_shape, particle.particle.mesh.fillColor);
+            survivors.push(particle);
+        }
+    }
+
+    if (viz.lightHigh() > 0.33){
+        survivors.push(new PObject(viz.gl, 1, 
+            [viz.camera.viewPoint[0]+3*Math.random()-1.5, viz.camera.viewPoint[1]+3*Math.random()-1.5, viz.camera.viewPoint[2]+3*Math.random()-1.5],
+            viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
+    }
+    if (Math.abs(viz.lightHigh() - viz.lastHigh) > 0.15){
+        if (Math.random() > 0.6){
+            setTimeout(() => {viz.explode();}, Math.floor(100*Math.random()));
+        }
+    }
+
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-    viz.gl.useProgram(program);
-
-    var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 100.0;
+   
+    var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 2000.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
-    var cameraMatrix = mat4.create();
-    mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
+    // var cameraMatrix = mat4.create();
+    // mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
 
-    //var pos = vec3.create(); var up = vec3.create(); var to = vec3.create(); 
-    //vec3.set(pos, 0, 0, 4); vec3.set(up, 0, 1, 0); vec3.set(to, 0, 0, 0);
-    //mat4.lookAt(cameraMatrix, pos, to, up);
-
-    // mat4.rotate(cameraLoc, cameraLoc, current_t, Y_AXIS);
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(1*current_x-0.5, -1*getEyeHeight(), -1*current_y-0.5));
-    // mat4.translate(cameraLoc, cameraLoc, vec3.fromValues(3, -1.5, 6));
-    
     var normalMatrix = mat4.create();    
-    mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
+    mat4.copy(normalMatrix, viz.camera.worldToCamera); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
-    var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
+    var transforms = { projection: projectionMatrix, camera: viz.camera.worldToCamera, normals: normalMatrix };
     
-    var lights = { 
-        positions: [
-            0,-1.0,5.0,
-            4.0,0.0,3.0,
-            -4,0,3,
-            0,1,10,
-        ], 
-        colors: [
-            viz.lightHigh()*50,viz.lightHigh()*50,viz.lightHigh()*50,
-            viz.lightKick()*20,0,0,
-            0,0,viz.lightMid()*20,
-            30,30,30,
-        ],
-    };
+    var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
+    
+    var exposure = Math.max(0.5, viz.lightKick()) + 2*viz.lightHigh();
+    drawSkybox(viz, viz.gl, program, transforms, exposure);        
+
+    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
+
+    var lights = getLights(viz);
 
     viz.clearColor = viz.bgColor.map(color => 3*viz.lightHigh()*color);
     
@@ -318,7 +470,35 @@ function updateVisualizer(viz, time) {
             ENABLE_TEXTURES ? wallTexture : null);
     };
 
+    for (var i = 0; i < viz.particles.length; i++){
+        drawShape(viz.gl, viz.particles[i].gl_shape, program, transforms, lights, null, true);
+    }
+
+    viz.particles = survivors;
+
     viz.gl.useProgram(null);
+
+    viz.lastHigh = viz.lightHigh();
+    viz.lastMid = viz.lightMid();
+    viz.lastKick = viz.lightKick();
+}
+
+function getLights(viz)
+{
+    return { 
+        positions: [
+            viz.camera.viewPoint[0] - 40*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 40*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 40*viz.camera.viewDir[2],
+            0,5,0,
+            4.0,0.0,3.0,
+            -4,0,3,
+        ], 
+        colors: [
+            800,800,800,
+            viz.lightHigh()*300,viz.lightHigh()*300,viz.lightHigh()*300,
+            viz.lightKick()*20,0,0,
+            0,0,viz.lightMid()*20,
+        ],
+    };
 }
 
 /**
@@ -329,8 +509,6 @@ const initVisualizer = (viz) => {
 
     viz.gl.depthFunc(viz.gl.LESS);
     viz.gl.enable(viz.gl.DEPTH_TEST);
-
-    program = createGlslProgram(viz.gl, "vertexShader", "fragmentShader");
 
     // Bind the texture
     if (ENABLE_TEXTURES){
@@ -349,6 +527,68 @@ const initVisualizer = (viz) => {
         viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
     }
 
+    const size = 1000; viz.skyboxShape = createSkybox(viz.gl, size);
 }
 
+function getProgram(viz, vertName, fragName)
+{
+    var name = vertName+'_'+fragName;
+    if (!(name in programs)) { 
+        var program = createProgram(viz, vertName, fragName);
+        program.name = name; programs[name] = program;
+    }        
+    return programs[name];
+};
 
+function createProgram(viz, vertName, fragName) 
+{        
+    var gl = viz.gl; 
+    var vertexShaderId = vertName+"_vertex_program";
+    var fragmentShaderId = fragName+"_fragment_program";
+
+    var program = gl.createProgram();
+
+    gl.attachShader(program, createShader(viz, vertexShaderId));
+    gl.attachShader(program, createShader(viz, fragmentShaderId));
+    gl.linkProgram(program);
+    gl.validateProgram(program);
+
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        var infoLog = gl.getProgramInfoLog(program);
+        gl.deleteProgram(program);
+        throw new Error("An error occurred linking the program: " + infoLog);
+    } else {
+        return program;
+    }
+};
+
+function createShader(viz, shaderScriptId) 
+{        
+    var gl = viz.gl;
+
+    var shaderScript = $("#"+shaderScriptId);
+    var shaderSource = shaderScript[0].text;
+
+    if (shaderScript.data('include')) { shaderSource = $('#'+shaderScript.data('include')).text() + shaderSource; }
+
+    var shaderType = null;
+    if (shaderScript[0].type === "x-shader/x-vertex") {
+        shaderType = gl.VERTEX_SHADER;
+    } else if (shaderScript[0].type === "x-shader/x-fragment") {
+        shaderType = gl.FRAGMENT_SHADER;
+    } else {
+        throw new Error("Invalid shader type: " + shaderScript[0].type)
+    }
+
+    var shader = gl.createShader(shaderType);
+    gl.shaderSource(shader, shaderSource);
+    gl.compileShader(shader);
+
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        var infoLog = gl.getShaderInfoLog(shader);
+        gl.deleteShader(shader);
+        throw new Error("An error occurred compiling the shader: " + infoLog);
+    } else {
+        return shader;
+    }
+};

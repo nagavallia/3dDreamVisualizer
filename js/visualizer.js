@@ -1,5 +1,10 @@
 let INC = 0.01;
 
+function rand_color(){
+  colors = [[0,1,0],[1,1,1],[1,0,0],[0,0,1],[0,1,1],[1,1,0],[1,0,1],[1,0.7,0.7],[1,0.7,0.3]]
+  return colors[Math.floor(Math.random()*colors.length)];
+}
+
 class SteveMarschnersDreamVisualizer {
   
   /** A visualizer expects loader.music to be an audio buffer */
@@ -16,9 +21,12 @@ class SteveMarschnersDreamVisualizer {
     this.canvas = canvas
     this.gl = initializeWebGL(this.canvas)
     this.objects = []
+    this.particles = []
+    this.colors = [[1,0.2,0.2],[0.2,1,0.2],[0.2,0.2,1],[1,1,0.2],[1,0.2,1],[0.2,1,1],[1,1,1]];
     this.animation_i = 0.0;
-    this.clearColor = [0.1, 0.1, 0.2, 0.0]
-    this.bgColor = [0.1, 0.1, 0.2, 0.0]
+    this.bgColor = [0.2,0.2,0.2, 0.0]
+    this.clearColor = this.bgColor;
+    this.respawn = [];
 
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
@@ -91,25 +99,32 @@ class SteveMarschnersDreamVisualizer {
   init() {
 
     // functions [0,1] for animating to different things
-    // const iKick = () => this.bandan.getFrequencyValue(22, ease.inCubic)
+    const iKickEase = () => this.bandan.getFrequencyValue(22, ease.inCubic)
     // const iHigh = () => this.bandan.getFrequencyValue(18000, ease.outQuart)
     const iKick = () => this.bandan.getFrequencyValue(22)
     const iHigh = () => this.bandan.getFrequencyValue(18000)
     const iTime = () => this.animation_i
 
-    this.lightHigh = () => this.bandan.getFrequencyValue(18000)
-    this.lightKick = () => this.bandan.getFrequencyValue(22)
-    this.lightMid = () => this.bandan.getFrequencyValue(4000)
-
+    this.lightHigh = () => this.bandan.getFrequencyValue(16000)
+    this.lastHigh = 0;
+    this.lightMid = () => this.bandan.getFrequencyValue(1000)
+    this.lastMid = 0;
+    this.lightKick = () => this.bandan.getFrequencyValue(40)
+    this.lastKick = 0;
+    
     return Promise.resolve(new ResourceLoader(this))
-      // audio buffer needs to be loaded to 'audio', also load meshes and textures
-      .then(loader => loader.loadAudio('audio', 'songs/vollekraftvoraus.mp3', context))
-      // .then(loader => loader.loadAudio('audio', 'songs/shooting_stars.mp3', context))
-      .then(loader => loader.loadImage('earthImage', 'data/earth.png'))
-      .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
-      
-      // things have been loaded 
-      .then(_ => {
+        // audio buffer needs to be loaded to 'audio', also load meshes and textures
+        .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
+        .then(loader => loader.loadImage('earthImage', 'earth.png'))
+        .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
+        .then(loader => loader.loadImage('skyboxX0', 'skybox/galaxy+X.png'))
+        .then(loader => loader.loadImage('skyboxX1', 'skybox/galaxy-X.png'))
+        .then(loader => loader.loadImage('skyboxY0', 'skybox/galaxy+Y.png'))
+        .then(loader => loader.loadImage('skyboxY1', 'skybox/galaxy-Y.png'))
+        .then(loader => loader.loadImage('skyboxZ0', 'skybox/galaxy+Z.png'))
+        .then(loader => loader.loadImage('skyboxZ1', 'skybox/galaxy-Z.png'))
+        // things have been loaded 
+        .then(_ => {
 
         const color1 = {
           texture: this.earthImage,
@@ -124,65 +139,101 @@ class SteveMarschnersDreamVisualizer {
           fillColor: [0.2157, 0.2549, 0.2510],
         }
 
-        /** One sphere */
-        const kick_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,1,0], [1,1,0])
-        // kick_sphere.transform(transform.translate(1,0,0))
-        kick_sphere.animation = new Animation(kick_sphere, iHigh);
-        kick_sphere.animation.addSequence([
-            anim.translate(0.75,0.25,0),
-            anim.compose([
-                anim.translateFixed(-0.75,-0.25,0),
-                anim.waves(1,2),
-                anim.translateFixed(0.75, 0.25, 0)
-            ]),
-            anim.compose([
-                anim.translateFixed(-0.75,-0.25,0),
-                anim.waves(1,2),
-                anim.translateFixed(0.75, 0.25, 0)
-            ]),
-            anim.compose([
-                anim.translateFixed(-0.75,-0.25,0),
-                anim.waves(1,2),
-                anim.translateFixed(0.75, 0.25, 0)
-            ]),
-            anim.compose([
-                anim.translateFixed(-0.75,-0.25,0),
-                anim.waves(1,2),
-                anim.translateFixed(0.75, 0.25, 0)
-            ]),
-            anim.compose([
-                anim.translateFixed(-0.75,-0.25,0),
-                anim.waves(1,2),
-                anim.translateFixed(0.75, 0.25, 0)
-            ]),
-        ])
-        this.objects.push(kick_sphere)
+        var MAX_BG_SPHERES = 4;
+        for (var i=0;i<MAX_BG_SPHERES;i++){
+          var color = rand_color()
+          const bg_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, color, color)
+          bg_sphere.transform(transform.translate(0,0,-8))
+          bg_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES))
 
-        /** Another sphere */
-        const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
-        high_sphere.animation = new Animation(high_sphere, iKick);
-        high_sphere.animation.addSequence([
-            anim.translate(-1,1,0),
-            anim.compose([
-                anim.translate(1,-1,0),
-                anim.spikes2(1,2.5),
-                anim.translate(-1,1, 0)
-            ])
-        ])
-        this.objects.push(high_sphere)
+          var amt = 2*Math.random()-1;
+          bg_sphere.animation = new Animation(bg_sphere, iKick);
+          bg_sphere.animation.addSequence([
+              anim.translate(0,amt/2,0),
+              anim.translate(0,amt/2,0),
+              anim.compose([
+                  anim.rotateFixed([0,1,0],-2*i/MAX_BG_SPHERES),
+                  anim.translateFixed(0,-amt,8),
+                  anim.waves(1,2),
+                  anim.translateFixed(0,amt,-8),
+                  anim.rotateFixed([0,1,0],2*i/MAX_BG_SPHERES),
+              ]),
+          ])
 
-        /** one more */
-        const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [1,1,1])
-        kick_sphere2.animation = new Animation(kick_sphere2, iKick);
-        kick_sphere2.animation.addSequence([
-          anim.translate(1,0,0),
-          anim.translate(0,1,0),
-          anim.translate(-2,0,0),
-          anim.translate(0,-2,0),
-          anim.translate(2,0,0),
-          anim.translate(0,2,0)
-        ])
-        this.objects.push(kick_sphere2)
+          this.objects.push(bg_sphere)
+        }
+
+        for (var i=0;i<MAX_BG_SPHERES;i++){
+          const spike_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, rand_color(),[1,1,1])
+          spike_sphere.transform(transform.translate(0,0,-12))
+          spike_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))
+
+          spike_sphere.animation = new Animation(spike_sphere, iHigh);
+          spike_sphere.animation.addSequence([
+              anim.compose([
+                  anim.rotateFixed([0,1,0],-2*i/MAX_BG_SPHERES-1/MAX_BG_SPHERES),
+                  anim.translateFixed(0,0,12),
+                  anim.spikes2(1,16),
+                  anim.translate(0,1,0),
+                  anim.translateFixed(0,0,-12),
+                  anim.rotateFixed([0,1,0],2*i/MAX_BG_SPHERES+1/MAX_BG_SPHERES),
+              ]),
+          ])
+
+          this.objects.push(spike_sphere)
+        }
+
+        for (var i=0;i<2*MAX_BG_SPHERES;i++){
+          const rot_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,1,1],[1,1,1])
+          var up = i%2 == 0 ? 5 : -5;
+          rot_sphere.transform(transform.translate(0,up,-15))
+          rot_sphere.transform(transform.rotate([0,1,0],i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))
+
+          rot_sphere.animation = new Animation(rot_sphere, iKickEase);
+          rot_sphere.animation.addSequence([
+            anim.rotate([0,1,0],0.4,true),
+              // anim.compose([
+              //     anim.rotateFixed([0,1,0],-2*i/MAX_BG_SPHERES-1/MAX_BG_SPHERES/2),
+              //     anim.translateFixed(0,-up,15),
+              //     anim.spikes2(1,16),
+              //     anim.translate(0,1,0),
+              //     anim.translateFixed(0,up,-15),
+              //     anim.rotateFixed([0,1,0],2*i/MAX_BG_SPHERES+1/MAX_BG_SPHERES/2),
+              // ]),
+          ])
+
+          this.objects.push(rot_sphere)
+        }
+
+        const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
+        globe.transform(transform.scale(-20))
+        //this.objects.push(globe)
+
+        // /** Another sphere */
+        // const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
+        // high_sphere.animation = new Animation(high_sphere, iKick);
+        // high_sphere.animation.addSequence([
+        //     anim.translate(-1,1,0),
+        //     anim.compose([
+        //         anim.translate(1,-1,0),
+        //         anim.spikes2(1,2.5),
+        //         anim.translate(-1,1, 0)
+        //     ])
+        // ])
+        // this.objects.push(high_sphere)
+
+        // /** one more */
+        // const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [1,1,1])
+        // kick_sphere2.animation = new Animation(kick_sphere2, iKick);
+        // kick_sphere2.animation.addSequence([
+        //   anim.translate(1,0,0),
+        //   anim.translate(0,1,0),
+        //   anim.translate(-2,0,0),
+        //   anim.translate(0,-2,0),
+        //   anim.translate(2,0,0),
+        //   anim.translate(0,2,0)
+        // ])
+        // this.objects.push(kick_sphere2)
 
 
         // const time_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
@@ -196,6 +247,20 @@ class SteveMarschnersDreamVisualizer {
         //   anim.translate(0,2,0)
         // ])
         // this.objects.push(time_sphere)
+        
+        var gl = this.gl;
+        var cubemap = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, cubemap);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_X,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxX0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Y,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxY0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_POSITIVE_Z,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxZ0);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_X,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxX1);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Y,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxY1);
+        gl.texImage2D(gl.TEXTURE_CUBE_MAP_NEGATIVE_Z,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE, this.skyboxZ1);
+        gl.generateMipmap(gl.TEXTURE_CUBE_MAP);
+        gl.bindTexture(gl.TEXTURE_CUBE_MAP, null);
+        this.skyboxCubemap = cubemap;
 
       })
       .then(_ => initVisualizer(this))
@@ -226,6 +291,21 @@ class SteveMarschnersDreamVisualizer {
       this.source.start(0, this.startOffset % this.audio.duration);
     }
     this.isPlaying = !this.isPlaying;
+  }
+
+  explode(){
+    if (this.objects.length < 2){
+      return;
+    }
+    for (var i = 0; i < this.objects.length; i++) {
+        if (!this.objects[i].animation) continue;
+
+        this.particles.push(PObject.createFromAObject(this.gl, this.objects[i].animation));
+        this.respawn.push(this.objects[i]);
+        setTimeout(() => {this.objects.push(this.respawn.pop())}, 5000);
+        this.objects.splice(i, 1);
+        return;
+    };
   }
 
 

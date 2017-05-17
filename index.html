@@ -36,14 +36,13 @@
     <h1>CS 4621 Final Project <span class="subtitle">Interactive Music Visualizer</span></h1>
 
     <div align="center">
-        <canvas tabindex="1" id="webglCanvas" style="border: none; background-color: black;" width="800" height="600"></canvas>
-
+        <canvas tabindex="1" id="webglCanvas" style="border: none; background-color: black;" width="1280" height="720"></canvas>
     </div>
 
-    <button id="playbutton" style="display: block" disabled="true">Please wait, loading...</button>
+    <!--<button id="playbutton" style="display: block" disabled="true">Please wait, loading...</button>
     <div> ( or just press 'p') </div>
-    <div style="margin-top:50px"> ( click canvas for fullscreen )</div>
-    <div style="background-color: #efefef; margin-top: 30px">
+    <div style="margin-top:50px"> ( click canvas for fullscreen )</div> -->
+    <div style="background-color: #efefef; margin-top:8px">
         <table style="width: 100%">
             <tr>
                 <td colspan="2">
@@ -78,7 +77,7 @@
                     <input type="checkbox" name="mesh" value="sphere.obj" checked>Sphere<br>
                 </td>
             </tr>
-                        <tr>
+                        <!--<tr>
                 <td colspan="2">
                     <span>Background Color:</span>
                 </td>
@@ -95,8 +94,22 @@
                     </form>
                 </td>
                 <td style="width: 48%; height: 97%; text-align: center" id="colorPicker">
-                    <span>Click to choose custom color:</span><br>
-                    <input type="color" id="bgColorPicker" name="color" style="width: 40%; height: 60%">
+                    <span style="width:99%; display: block">Click to choose custom color:</span>
+                    <input type="color" id="bgColorPicker" name="color" style="width: 40%; height: 60px">
+                </td>
+            </tr>-->
+            <tr>
+                <td style="width: 48%">Look sensitivity</td>
+                <td style="width: 48%"><div id="lookSlider"></div></td>
+            </tr>
+            <tr>
+                <td style="width: 48%">Movement Speed</td>
+                <td style="width: 48%"><div id="movementSlider"></div></td>
+            </tr>
+            <tr>
+                <td style="width: 48%">Invert Vertical Look</td>
+                <td style="width: 48%">
+                    <input type="checkbox" name="invertLook" id="invertLook"><br>
                 </td>
             </tr>
         </table>
@@ -108,10 +121,10 @@
 
     <ul>
         <li>Joseph Marino (jnm92)</li>
-        <li>Arnesh</li>
-        <li>Kevin</li>
+        <li>Arnesh Nagavalli (amn79)</li>
+        <li>Kevin Hernandez Chavez (keh222)</li>
         <li>Ray Beck (rhb263)</li>
-    </ul>
+    </ul><br />
 </div>
 
 
@@ -123,10 +136,10 @@
 <script src="http://k3d.ivank.net/K3D.js"></script>
 
 
-<script id="vertexShader" type="x-shader/x-vertex">
+<script id="main_vertex_program" type="x-shader/x-vertex">
 
     uniform bool use_textures;
-
+    uniform bool particle;
     uniform mat4 projectionMatrix;
     uniform mat4 cameraMatrix;
     uniform mat4 normalMatrix;
@@ -134,11 +147,11 @@
     #define MAX_NUM_LIGHTS 5
     uniform vec3 lightPositions[ MAX_NUM_LIGHTS ];
     varying vec3 fLightPositions[ MAX_NUM_LIGHTS ];
-
+    
     attribute vec3 position;
-    attribute vec3 normal;
     attribute vec2 texCoord;
-
+    attribute vec3 normal;
+    
     varying vec4 frag_position;
     varying vec3 frag_normal;
     varying vec2 frag_texCoord;
@@ -157,15 +170,16 @@
 
 </script>
 
-<script id="fragmentShader" type="x-shader/x-fragment">
+<script id="main_fragment_program" type="x-shader/x-fragment">
 
     precision highp float;
 
     #define MAX_NUM_LIGHTS 5
     uniform vec3 lightColors[ MAX_NUM_LIGHTS ];
     varying vec3 fLightPositions[ MAX_NUM_LIGHTS ];
-
-    uniform bool use_textures;
+    
+    uniform bool use_textures;    
+    uniform bool particle;
     uniform sampler2D texture;
     uniform vec3 color;
 
@@ -192,9 +206,15 @@
             vec3 H = normalize(L + V);
 
             vec3 diffuseColor = use_textures ? texture2D(texture, frag_texCoord).rgb : color;
-            vec3 specularColor = vec3(0.5); // TODO actual specular colors?
+            vec3 specularColor = vec3(0.5);
 
-            vec3 Idiff = diffuseColor * max(dot(N, L), 0.0);
+            vec3 Idiff;
+            if (particle){
+                Idiff = diffuseColor;
+            } else {
+                Idiff = diffuseColor * max(dot(N, L), 0.0);
+            }
+
             vec3 Ispec = specularColor * pow(max(dot(N, H), 0.0), 1.0 / roughness);
 
             finalColor += lightColors[i] * (Idiff + Ispec) / (r*r);
@@ -204,8 +224,39 @@
     }
 
 </script>
+
+<script id="skybox_vertex_program" type="x-shader/x-vertex">
+
+uniform mat4 projectionMatrix;
+uniform mat4 cameraMatrix;
+
+attribute vec3 position;
+varying vec3 fPosition;
+
+void main() {
+    fPosition = position;
+    gl_Position = projectionMatrix * cameraMatrix * vec4(position, 1.0);
+}
+
+</script>
+
+<script id="skybox_fragment_program" type="x-shader/x-fragment">
+    
+precision highp float;
+
+uniform samplerCube skyboxTexture;
+uniform float exposure;
+varying vec3 fPosition;
+
+void main() { 
+    gl_FragColor = vec4(textureCube(skyboxTexture, fPosition).rgb * exposure, 1.0);
+}
+
+</script>
+
 <script src="js/visualizer.js"></script>
 <script src="js/helpers.js"></script>
+<script src="js/particles.js"></script>
 <script src="js/world_objects.js"></script>
 <script src="js/animation.js"></script>
 <script src="js/shaders.js"></script>
