@@ -26,9 +26,13 @@ function pointerSetup(gl, canvas, camera) {
     canvas.onclick = () => canvas.requestPointerLock()
 
     const rotateCamera = (e) => {
+        var sens = $("#lookSlider").slider("value");
+        var invertVertVal = invertVert ? 1.0 : -1.0;
+        var invertHorizVal = invertHoriz ? 1.0 : -1.0;
+
         //get angles of rotation
-        var yRot = -1.0*(e.movementX/canvas.width)*2*Math.PI;
-        var xRot = -1.0*(e.movementY/canvas.height)*2*Math.PI;
+        var yRot = invertHorizVal*(sens/50)*(e.movementX/canvas.width)*2*Math.PI;
+        var xRot = invertVertVal*(sens/50)*(e.movementY/canvas.height)*2*Math.PI;
 
         var mRotX = mat4.create(); var mRotY = mat4.create();
         mat4.fromXRotation(mRotX, xRot); mat4.fromYRotation(mRotY, yRot);
@@ -54,6 +58,7 @@ function pointerSetup(gl, canvas, camera) {
     const keyboardCamera = (e) => {
         switch (e.key) {
             case 'w':
+                console.log(camera.MAX_FRAMES);
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,0,-1);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -389,6 +394,11 @@ function drawSkybox(viz, gl, program, transforms, exposure)
 }
 
 function updateVisualizer(viz, time) {
+    viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
+
+    invertVert = $("#invertLook")[0].checked;
+    invertHoriz = $("#invertHoriz")[0].checked;
+
     if (viz.camera.moving) {
         viz.camera.frameCount++;
         // console.log(viz.camera.moveVec + "   " + viz.camera.frameCount);

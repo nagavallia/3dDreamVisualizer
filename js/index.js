@@ -2,16 +2,21 @@
 var lookSlider = $("#lookSlider");
 
 lookSlider.slider({
-    min: 1,
-    max: 100
+    min: 25,
+    max: 100,
+    value: 50
 });
 
 var movementSlider = $("#movementSlider");
 
 movementSlider.slider({
-    min: 1,
-    max: 100
+    min: 0,
+    max: 23,
+    value: 15
 });
+
+var invertVert = $("#invertLook")[0].checked;
+var invertHoriz = $("#invertHoriz")[0].checked;
 
 /*********************************** audio ***********************************/
 
