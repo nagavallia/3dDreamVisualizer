@@ -378,11 +378,11 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     
-    // var cameraMatrix = mat4.create(); 
-    // var lookPoint = vec3.clone(viz.camera.lookPoint); 
-    // vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
-    // mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, transforms.camera);
+    var cameraMatrix = mat4.create(); 
+    var lookPoint = vec3.clone(viz.camera.lookPoint); 
+    vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
+    mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
         
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
