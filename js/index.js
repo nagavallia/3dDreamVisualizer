@@ -16,7 +16,7 @@ movementSlider.slider({
 });
 
 var invertVert = $("#invertLook")[0].checked;
-//var invertHoriz = $("#invertHoriz")[0].checked;
+var invertHoriz = $("#invertHoriz")[0].checked;
 
 /*********************************** audio ***********************************/
 
