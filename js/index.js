@@ -16,7 +16,7 @@ movementSlider.slider({
 });
 
 var invertVert = $("#invertLook")[0].checked;
-var invertHoriz = $("#invertHoriz")[0].checked;
+//var invertHoriz = $("#invertHoriz")[0].checked;
 
 /*********************************** audio ***********************************/
 
@@ -39,9 +39,9 @@ const visualizer = new SteveMarschnersDreamVisualizer($("#webglCanvas")[0])
 visualizer
 .init()
 .then(() => {
-  playbutton.removeAttribute('disabled')
-  playbutton.innerHTML = 'Play/pause'
-  playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
+  //playbutton.removeAttribute('disabled')
+  //playbutton.innerHTML = 'Play/pause'
+  //playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
   document.addEventListener('keypress', (event) => {if (event.key == 'p'){ visualizer.togglePlayback() } else if (event.key == 'u'){ visualizer.explode()}})
 })
 .catch(console.error)

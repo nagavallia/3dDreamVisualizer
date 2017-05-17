@@ -18,6 +18,7 @@ function initializeWebGL(canvas) {
 
 function pointerSetup(gl, canvas, camera) {
     // mouse lock stuff
+    
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock ||
@@ -28,7 +29,7 @@ function pointerSetup(gl, canvas, camera) {
     const rotateCamera = (e) => {
         var sens = $("#lookSlider").slider("value");
         var invertVertVal = invertVert ? 1.0 : -1.0;
-        var invertHorizVal = invertHoriz ? 1.0 : -1.0;
+        var invertHorizVal = -1.0;//invertHoriz ? 1.0 : -1.0;
 
         //get angles of rotation
         var yRot = invertHorizVal*(sens/50)*(e.movementX/canvas.width)*2*Math.PI;
@@ -56,6 +57,7 @@ function pointerSetup(gl, canvas, camera) {
     }
 
     const keyboardCamera = (e) => {
+        e.preventDefault();
         switch (e.key) {
             case 'w':
                 console.log(camera.MAX_FRAMES);
@@ -196,17 +198,19 @@ function pointerSetup(gl, canvas, camera) {
         }
         camera.updateBasis();
     }
+    
+    document.addEventListener("keydown", keyboardCamera, false);
 
     const lockChangeAlert = () => {
       if (document.pointerLockElement === canvas ||
           document.mozPointerLockElement === canvas) {
         console.log('The pointer lock status is now locked');
         document.addEventListener("mousemove", rotateCamera, false);
-        document.addEventListener("keydown", keyboardCamera, false)
+        //document.addEventListener("keydown", keyboardCamera, false)
       } else {
         console.log('The pointer lock status is now unlocked');
         document.removeEventListener("mousemove", rotateCamera, false);
-        document.removeEventListener("keydown", keyboardCamera, false);
+        //document.removeEventListener("keydown", keyboardCamera, false);
       }
     }
 
@@ -397,7 +401,7 @@ function updateVisualizer(viz, time) {
     viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
 
     invertVert = $("#invertLook")[0].checked;
-    invertHoriz = $("#invertHoriz")[0].checked;
+    //invertHoriz = $("#invertHoriz")[0].checked;
 
     if (viz.camera.moving) {
         viz.camera.frameCount++;
