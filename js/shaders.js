@@ -228,8 +228,8 @@ function pointerSetup(gl, canvas, camera) {
 
     const exitfullscreen = () => {
         if (!document.webkitIsFullScreen && !document.mozFullScreen){
-            canvas.width = 800;
-            canvas.height = 600;
+            canvas.width = 1280;
+            canvas.height = 720;
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
     }
