@@ -42,8 +42,24 @@
     <!--<button id="playbutton" style="display: block" disabled="true">Please wait, loading...</button>
     <div> ( or just press 'p') </div>
     <div style="margin-top:50px"> ( click canvas for fullscreen )</div> -->
-    <div style="background-color: #efefef; margin-top:8px">
+    <div style="background-color: #efefef; margin-top:8px;">
         <table style="width: 100%">
+            <tr>
+                <td>
+                    <h2 style="margin:0;">Controls</h2> 
+                    P - Start/Stop <br />
+                    WASD - Movement <br />
+                    F - Fly/Orbit Modes <br />
+                    Q/E - Rotate Camera
+                </td>
+                <td>
+                    Mouse - Camera Look<br />
+                    Shift/Space - Camera Up/Down<br />
+                    U - Do Explosion<br />
+                    1-7 - Preset Camera Positions<br />
+                    Click Canvas - Go Fullscreen
+                </td>
+            </tr>
             <tr>
                 <td colspan="2">
                     <span>Choose song:</span>
@@ -109,12 +125,16 @@
             <tr>
                 <td style="width: 48%">Invert Vertical Look</td>
                 <td style="width: 48%">
-                    <input type="checkbox" name="invertLook" id="invertLook"><br>
+                    <input type="checkbox" name="invertlook" id="invertLook"><br>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 48%">Invert Horizontal Look</td>
+                <td style="width: 48%">
+                    <input type="checkbox" name="inverthoriz" id="invertHoriz"><br>
                 </td>
             </tr>
         </table>
-
-
 
     </div>
     <h2>Team Members</h2>

@@ -29,7 +29,7 @@ function pointerSetup(gl, canvas, camera) {
     const rotateCamera = (e) => {
         var sens = $("#lookSlider").slider("value");
         var invertVertVal = invertVert ? 1.0 : -1.0;
-        var invertHorizVal = -1.0;//invertHoriz ? 1.0 : -1.0;
+        var invertHorizVal = invertHoriz ? 1.0 : -1.0;
 
         //get angles of rotation
         var yRot = invertHorizVal*(sens/50)*(e.movementX/canvas.width)*2*Math.PI;
@@ -57,7 +57,6 @@ function pointerSetup(gl, canvas, camera) {
     }
 
     const keyboardCamera = (e) => {
-        e.preventDefault();
         switch (e.key) {
             case 'w':
                 console.log(camera.MAX_FRAMES);
@@ -127,6 +126,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                     break;
             case 'Shift':
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,-1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -135,6 +135,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                 break;
             case ' ': //space bar pressed
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -401,7 +402,7 @@ function updateVisualizer(viz, time) {
     viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
 
     invertVert = $("#invertLook")[0].checked;
-    //invertHoriz = $("#invertHoriz")[0].checked;
+    invertHoriz = $("#invertHoriz")[0].checked;
 
     if (viz.camera.moving) {
         viz.camera.frameCount++;
