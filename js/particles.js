@@ -28,20 +28,20 @@ class Particle {
 
     update(time) {
         this.remaining -= time;
+        var ratio = this.remaining/this.total+1;
         if (this.remaining < 0){
             return false;
         }
         this.mesh.vertices = ([].concat.apply([], this.mesh.vertices.map((vert, i) => {
             if (i%9 == 0){
-                return [vert + this.mesh.normals[i]*UPDATE_AMT, this.mesh.vertices[i+1]+this.mesh.normals[i+1]*UPDATE_AMT, this.mesh.vertices[i+2]+this.mesh.normals[i+2]*UPDATE_AMT,
-                    this.mesh.vertices[i+3] + this.mesh.normals[i]*UPDATE_AMT, this.mesh.vertices[i+4]+this.mesh.normals[i+1]*UPDATE_AMT, this.mesh.vertices[i+5]+this.mesh.normals[i+2]*UPDATE_AMT,
-                    this.mesh.vertices[i+6] + this.mesh.normals[i]*UPDATE_AMT, this.mesh.vertices[i+7]+this.mesh.normals[i+1]*UPDATE_AMT, this.mesh.vertices[i+8]+this.mesh.normals[i+2]*UPDATE_AMT]
+                return [vert + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+1]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+2]+this.mesh.normals[i+2]*UPDATE_AMT*ratio,
+                    this.mesh.vertices[i+3] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+4]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+5]+this.mesh.normals[i+2]*UPDATE_AMT*ratio,
+                    this.mesh.vertices[i+6] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+7]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+8]+this.mesh.normals[i+2]*UPDATE_AMT*ratio]
             } else {
                 return []
             }
         })));
-        var ratio = this.remaining/this.total;
-        this.mesh.fillColor = this.color.map(vert => ratio*vert);
+        this.mesh.fillColor = this.color.map(vert => (ratio-1)*vert);
         return true;
     }
 }

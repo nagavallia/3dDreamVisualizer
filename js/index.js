@@ -1,7 +1,19 @@
+/*********************************** jquery **********************************/
+var lookSlider = $("#lookSlider");
+
+lookSlider.slider({
+    min: 1,
+    max: 100
+});
+
+var movementSlider = $("#movementSlider");
+
+movementSlider.slider({
+    min: 1,
+    max: 100
+});
 
 /*********************************** audio ***********************************/
-
-alert("Checkout camera angle 7 (by hitting '7' after clicking the canvas)");
 
 /** Create a new audio context */
 const context = new (window.AudioContext || window.webkitAudioContext)();
