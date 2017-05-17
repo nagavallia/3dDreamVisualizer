@@ -27,47 +27,25 @@ function pointerSetup(gl, canvas, camera) {
 
     const rotateCamera = (e) => {
         //get angles of rotation
-        var xRot = -1.0*(e.movementX/canvas.width)*2*Math.PI;
-        var yRot = -1.0*(e.movementY/canvas.height)*2*Math.PI;
+        var yRot = -1.0*(e.movementX/canvas.width)*2*Math.PI;
+        var xRot = -1.0*(e.movementY/canvas.height)*2*Math.PI;
 
-        //turn angles into quaternions
-        var xQuat = quat.create(); var yQuat = quat.create();
+        var mRotX = mat4.create(); var mRotY = mat4.create();
+        mat4.fromXRotation(mRotX, xRot); mat4.fromYRotation(mRotY, yRot);
+
+        var R = mat4.create(); mat4.multiply(R, mRotY, mRotX);
+
         if (camera.orbitMode) {
-            console.log('before viewPoint: ' + camera.viewPoint);
-            var cameraMatrix = mat4.create();
-            mat4.lookAt(cameraMatrix, camera.viewPoint, camera.lookPoint, camera.viewUp);
+            var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+            var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+            var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
 
-            var camMatInv = mat4.create();
-            mat4.invert(camMatInv,cameraMatrix);
-            var worldOrigin = vec4.fromValues(0,0,0,1);
-            vec4.scale(worldOrigin, worldOrigin, worldOrigin[3]);
-
-            var translate = mat4.create(); var transInv = mat4.create();
-            mat4.fromTranslation(translate, vec3.fromValues(-worldOrigin[0], -worldOrigin[1], -worldOrigin[2]));
-            mat4.invert(transInv, translate);
-
-            vec3.transformMat4(camera.viewPoint,camera.viewPoint,translate);
-
-            quat.setAxisAngle(xQuat, vec3.fromValues(0,1,0), xRot); quat.setAxisAngle(yQuat, vec3.fromValues(1,0,0), yRot);
-
-            //apply quat rotation
-            vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
-            vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
-
-            vec3.transformQuat(camera.viewPoint, camera.viewPoint, xQuat);
-            vec3.transformQuat(camera.viewPoint, camera.viewPoint, yQuat);
-
-            vec3.transformMat4(camera.viewPoint,camera.viewPoint,transInv);
-
-            // console.log('after viewPoint: ' + camera.viewPoint);
-
+            mat4.multiply(R, R, L);
+            mat4.multiply(R, LInv, R);
+            mat4.multiply(camera.cameraToWorld, camera.cameraToWorld, R);
         }
         else {
-            quat.setAxisAngle(xQuat, camera.basisV, xRot); quat.setAxisAngle(yQuat, camera.basisU, yRot);
-
-            //apply quat rotation
-            vec3.transformQuat(camera.viewDir, camera.viewDir, xQuat);
-            vec3.transformQuat(camera.viewDir, camera.viewDir, yQuat);
+            mat4.multiply(camera.cameraToWorld, camera.cameraToWorld, R);
         }
 
         camera.updateBasis();
@@ -76,77 +54,139 @@ function pointerSetup(gl, canvas, camera) {
     const keyboardCamera = (e) => {
         switch (e.key) {
             case 'w':
-                var wMove = vec3.clone(camera.basisW); vec3.normalize(wMove, wMove); vec3.negate(wMove, wMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, wMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,0,-1);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'a':
-                var aMove = vec3.clone(camera.basisU); vec3.normalize(aMove, aMove); vec3.negate(aMove, aMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, aMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(-1,0,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 's':
-                var sMove = vec3.clone(camera.basisW); vec3.normalize(sMove, sMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, sMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,0,1);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'd':
-                var dMove = vec3.clone(camera.basisU); vec3.normalize(dMove, dMove); 
-                vec3.add(camera.viewPoint, camera.viewPoint, dMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(1,0,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'q':
-                var qRot = (1.0/40.0)*2*Math.PI;
-                var qQuat = quat.create(); quat.setAxisAngle(qQuat, camera.viewDir, qRot);
-                vec3.transformQuat(camera.viewUp, camera.viewUp, qQuat);
-                break;
+                if (!camera.moving) {
+                    var qRot = (1.0/40.0)*2*Math.PI;
+                    qRot *= 1/camera.MAX_FRAMES; 
+                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                    if (camera.orbitMode) {
+                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+            
+                        mat4.multiply(mRotZ, mRotZ, L);
+                        mat4.multiply(mRotZ, LInv, mRotZ);
+                    }
+                    camera.moveTrans = mRotZ;
+                    camera.moving = true;
+                }
+                    break;
             case 'e':
-                var eRot = -1.0*(1.0/40.0)*2*Math.PI;
-                var eQuat = quat.create(); quat.setAxisAngle(eQuat, camera.viewDir, eRot);
-                vec3.transformQuat(camera.viewUp, camera.viewUp, eQuat);
-                break;
+                if (!camera.moving) {
+                    var qRot = -1.0*(1.0/40.0)*2*Math.PI;
+                    qRot *= 1/camera.MAX_FRAMES; 
+                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                    if (camera.orbitMode) {
+                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+            
+                        mat4.multiply(mRotZ, mRotZ, L);
+                        mat4.multiply(mRotZ, LInv, mRotZ);
+                    }
+                    camera.moveTrans = mRotZ;
+                    camera.moving = true;
+                }
+                    break;
             case 'Shift':
-                var shiftMove = vec3.clone(camera.basisV); vec3.normalize(shiftMove, shiftMove); vec3.negate(shiftMove, shiftMove);
-                vec3.add(camera.viewPoint, camera.viewPoint, shiftMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,-1,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case ' ': //space bar pressed
-                var spaceMove = vec3.clone(camera.basisV); vec3.normalize(spaceMove, spaceMove); 
-                vec3.add(camera.viewPoint, camera.viewPoint, spaceMove);
+                if (!camera.moving) {
+                    var wMove = vec3.fromValues(0,1,0);
+                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
+                    mat4.fromTranslation(camera.moveTrans, wMove);
+                    camera.moving = true;
+                }
                 break;
             case 'f':
                 camera.orbitMode = !camera.orbitMode;
+                console.log(camera.orbitMode);
                 break;
             case '1':
-                camera.viewPoint = vec3.fromValues(0.0,0.0,4.0);
-                camera.viewDir = vec3.fromValues(0.0,0.0,-4.0);
-                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                var viewPoint = vec3.fromValues(0.0,0.0,4.0);
+                var viewDir = vec3.fromValues(0.0,0.0,-4.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '2':
-                camera.viewPoint = vec3.fromValues(0.0,0.0,-4.0);
-                camera.viewDir = vec3.fromValues(0.0,0.0,4.0);
-                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                var viewPoint = vec3.fromValues(0.0,0.0,-4.0);
+                var viewDir = vec3.fromValues(0.0,0.0,4.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '3':
-                camera.viewPoint = vec3.fromValues(4.0,0.0,0.0);
-                camera.viewDir = vec3.fromValues(-4.0,0.0,0.0);
-                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                var viewPoint = vec3.fromValues(4.0,0.0,0.0);
+                var viewDir = vec3.fromValues(-4.0,0.0,0.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '4':
-                camera.viewPoint = vec3.fromValues(-4.0,0.0,0.0);
-                camera.viewDir = vec3.fromValues(4.0,0.0,0.0);
-                camera.viewUp = vec3.fromValues(0.0,1.0,0.0);
+                var viewPoint = vec3.fromValues(-4.0,0.0,0.0);
+                var viewDir = vec3.fromValues(4.0,0.0,0.0);
+                var viewUp = vec3.fromValues(0.0,1.0,0.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '5':
-                console.log('hello');
-                camera.viewPoint = vec3.fromValues(0.0,4.0,0.0);
-                camera.viewDir = vec3.fromValues(0.0,-4.0,0.0);
-                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                var viewPoint = vec3.fromValues(0.0,4.0,0.0);
+                var viewDir = vec3.fromValues(0.0,-4.0,0.0);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '6':
-                camera.viewPoint = vec3.fromValues(0.0,-4.0,0.0);
-                camera.viewDir = vec3.fromValues(0.0,4.0,0.0);
-                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                var viewPoint = vec3.fromValues(0.0,-4.0,0.0);
+                var viewDir = vec3.fromValues(0.0,4.0,0.0);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break; 
             case '7':
-                camera.viewPoint = vec3.fromValues(11/1.3,15/1.3,16/1.3);
-                camera.viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
-                camera.viewUp = vec3.fromValues(0.0,0.0,1.0);
+                var viewPoint = vec3.fromValues(11/1.3,15/1.3,16/1.3);
+                var viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
+                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break;
         }
         camera.updateBasis();
@@ -333,11 +373,11 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     
-    var cameraMatrix = mat4.create(); 
-    var lookPoint = vec3.clone(viz.camera.lookPoint); 
-    vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
-    mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
-    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
+    // var cameraMatrix = mat4.create(); 
+    // var lookPoint = vec3.clone(viz.camera.lookPoint); 
+    // vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
+    // mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
+    gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, transforms.camera);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
         
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
@@ -349,6 +389,13 @@ function drawSkybox(viz, gl, program, transforms, exposure)
 }
 
 function updateVisualizer(viz, time) {
+    if (viz.camera.moving) {
+        viz.camera.frameCount++;
+        // console.log(viz.camera.moveVec + "   " + viz.camera.frameCount);
+        mat4.multiply(viz.camera.cameraToWorld, viz.camera.cameraToWorld, viz.camera.moveTrans);
+        viz.camera.updateBasis();
+        if (viz.camera.frameCount == viz.camera.MAX_FRAMES) {viz.camera.moving = false; viz.camera.frameCount = 0;}
+    }
 
     for (var i = 0; i < viz.objects.length; i++) {
         let object = viz.objects[i]
@@ -385,13 +432,13 @@ function updateVisualizer(viz, time) {
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 2000.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
-    var cameraMatrix = mat4.create();
-    mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
+    // var cameraMatrix = mat4.create();
+    // mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
 
     var normalMatrix = mat4.create();    
-    mat4.copy(normalMatrix, cameraMatrix); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
+    mat4.copy(normalMatrix, viz.camera.worldToCamera); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
-    var transforms = { projection: projectionMatrix, camera: cameraMatrix, normals: normalMatrix };
+    var transforms = { projection: projectionMatrix, camera: viz.camera.worldToCamera, normals: normalMatrix };
     
     var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);    
     
@@ -426,7 +473,7 @@ function getLights(viz)
 {
     return { 
         positions: [
-            viz.camera.viewPoint[0] - 10*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 10*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 10*viz.camera.viewDir[2],
+            viz.camera.viewPoint[0] - 40*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 40*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 40*viz.camera.viewDir[2],
             0,5,0,
             4.0,0.0,3.0,
             -4,0,3,
