@@ -28,20 +28,27 @@ class Particle {
 
     update(time) {
         this.remaining -= time;
-        var ratio = this.remaining/this.total+1;
+        const ratio = this.remaining/this.total+1;
         if (this.remaining < 0){
             return false;
         }
-        this.mesh.vertices = ([].concat.apply([], this.mesh.vertices.map((vert, i) => {
+
+        const verts = []
+        for (var i = 0, len = this.mesh.vertices.length; i < len; i++) {
             if (i%9 == 0){
-                return [vert + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+1]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+2]+this.mesh.normals[i+2]*UPDATE_AMT*ratio,
+                verts.push(
+                    this.mesh.vertices[i+0] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+1]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+2]+this.mesh.normals[i+2]*UPDATE_AMT*ratio,
                     this.mesh.vertices[i+3] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+4]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+5]+this.mesh.normals[i+2]*UPDATE_AMT*ratio,
-                    this.mesh.vertices[i+6] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+7]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+8]+this.mesh.normals[i+2]*UPDATE_AMT*ratio]
-            } else {
-                return []
-            }
-        })));
-        this.mesh.fillColor = this.color.map(vert => (ratio-1)*vert);
+                    this.mesh.vertices[i+6] + this.mesh.normals[i]*UPDATE_AMT*ratio, this.mesh.vertices[i+7]+this.mesh.normals[i+1]*UPDATE_AMT*ratio, this.mesh.vertices[i+8]+this.mesh.normals[i+2]*UPDATE_AMT*ratio)
+            } else { }
+        }
+
+        this.mesh.vertices = verts
+
+        for (var i = 0, len = this.mesh.fillColor.length; i < len; i++) {
+            this.mesh.fillColor[i] = this.mesh.fillColor[i] * (ratio-1)
+        }
+
         return true;
     }
 }

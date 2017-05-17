@@ -251,6 +251,7 @@ class SteveMarschnersDreamVisualizer {
   }
 
   setAudio(audio) {
+    const play = this.isPlaying
     // Stop playback
     if (this.isPlaying) {
       this.source.stop(0)
@@ -261,7 +262,7 @@ class SteveMarschnersDreamVisualizer {
     // load audio
     this.audio = audio
     // play!
-    this.togglePlayback()
+    if (play) this.togglePlayback()
   }
 
   /**
