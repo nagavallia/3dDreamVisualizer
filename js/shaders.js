@@ -57,7 +57,6 @@ function pointerSetup(gl, canvas, camera) {
     }
 
     const keyboardCamera = (e) => {
-        e.preventDefault();
         switch (e.key) {
             case 'w':
                 console.log(camera.MAX_FRAMES);
@@ -127,6 +126,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                     break;
             case 'Shift':
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,-1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -135,6 +135,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                 break;
             case ' ': //space bar pressed
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
