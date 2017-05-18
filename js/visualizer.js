@@ -36,25 +36,6 @@ class SteveMarschnersDreamVisualizer {
 
     pointerSetup(this.gl, this.canvas, this.camera)
 
-    $("#songChoice").change(function (){
-      var selectedsong = $("#selectedsong");
-      var songUpload = $("#songChoice")[0];
-
-      if ('files' in songUpload){
-        if (songUpload.files.length == 0){
-          console.log('no song selected');
-        } else {
-          var song = songUpload.files[0];
-          if ('name' in song){
-            selectedsong.text(song.name);
-            $("#customsong").prop("checked", true);
-            var loader = new ResourceLoader(this);
-            loader.loadAudio(name, name, context);
-          }
-        }
-      }
-    });
-
     $("#meshUpload").change(function(){
       var selected = $("#selectedMeshes");
       var upload = $("#meshUpload")[0];
@@ -114,7 +95,7 @@ class SteveMarschnersDreamVisualizer {
     
     return Promise.resolve(new ResourceLoader(this))
         // audio buffer needs to be loaded to 'audio', also load meshes and textures
-        .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
+        // .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
         .then(loader => loader.loadImage('earthImage', 'earth.png'))
         .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
         .then(loader => loader.loadImage('skyboxX0', 'skybox/galaxy+X.png'))
@@ -269,10 +250,26 @@ class SteveMarschnersDreamVisualizer {
       .catch(console.error)
   }
 
+  setAudio(audio) {
+    const play = this.isPlaying
+    // Stop playback
+    if (this.isPlaying) {
+      this.source.stop(0)
+      this.startOffset = 0
+      this.isPlaying = false
+      this.startTime = 0
+    }
+    // load audio
+    this.audio = audio
+    // play!
+    if (play) this.togglePlayback()
+  }
+
   /**
    * Play/pause
    */
   togglePlayback() {
+    if (!this.audio) return;
     if (this.isPlaying) {
       // Stop playback and save the position of the playhead
       this.source.stop(0);

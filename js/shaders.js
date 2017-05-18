@@ -57,7 +57,6 @@ function pointerSetup(gl, canvas, camera) {
     }
 
     const keyboardCamera = (e) => {
-        e.preventDefault();
         switch (e.key) {
             case 'w':
                 console.log(camera.MAX_FRAMES);
@@ -127,6 +126,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                     break;
             case 'Shift':
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,-1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -135,6 +135,7 @@ function pointerSetup(gl, canvas, camera) {
                 }
                 break;
             case ' ': //space bar pressed
+                e.preventDefault();
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,1,0);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
@@ -227,8 +228,8 @@ function pointerSetup(gl, canvas, camera) {
 
     const exitfullscreen = () => {
         if (!document.webkitIsFullScreen && !document.mozFullScreen){
-            canvas.width = 800;
-            canvas.height = 600;
+            canvas.width = 1280;
+            canvas.height = 720;
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
     }
