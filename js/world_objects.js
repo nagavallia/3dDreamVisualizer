@@ -32,7 +32,19 @@ class Camera {
 
       this.updateVectors();
 
+      this.vel_x = 0
+      this.vel_y = 0
+      this.vel_z = 0
+      this.vel_rot_z = 0
+
       // this.updateBasis();
+  }
+
+  updatePosition() {
+    var wMove = vec3.fromValues(this.vel_x, this.vel_y, this.vel_z);
+    vec3.scale(wMove, wMove, 1/this.MAX_FRAMES);
+    mat4.fromTranslation(this.moveTrans, wMove);
+    this.moving = true;
   }
 
    updateVectors() {
@@ -89,12 +101,24 @@ class Camera {
   }
 }
 
+// class Mesh {
+//   constructor(vertices, normals, lineInd, uvs, triInd, lineColor, fillColor) {
+//     this.vertices  = vertices
+//     this.normals   = normals
+//     this.lineInd   = lineInd
+//     this.uvs       = uvs
+//     this.triInd    = triInd
+//     this.lineColor = lineColor
+//     this.fillColor = fillColor
+//   }
+// }
+
 class AObject {
   constructor (gl, raw_mesh, textureImg, color = [1.0, 0.0, 0.0], lColor = [0,0,0]) {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
     this.gl = gl;
     this.mesh = {
-      vertices : parsed.c_verts,
+      vertices: parsed.c_verts,
       normals : parsed.c_norms,
       lineInd : ([].concat.apply([], parsed.i_verts.map((vert, i) => { switch(i % 3){
         case 0: 

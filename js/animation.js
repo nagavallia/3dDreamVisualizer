@@ -3,7 +3,7 @@ const transform = {
   scale : s => m => Object.assign(m, {
     vertices: m.vertices.map(v => v*s)
   }),
-  
+
   /** Translates an object */
   translate : (x, y, z) => m => Object.assign(m, {
     vertices: m.vertices.map((v, i) => {
@@ -88,7 +88,7 @@ const anim = {
   // each frame randomly scale vertex.xyz
   waves : (min, max) => function do_waves (m, t) {
     const amts = Array.apply(null, {length: m.vertices.length})
-    
+
     // Populate random amts
     for (var i = amts.length - 1; i >= 0; i--) {
       amts[i] = Math.random(min,max)
@@ -107,7 +107,6 @@ const anim = {
     for (var i = 0, len = m.vertices.length; i < len; i++) {
       m.vertices[i] = m.vertices[i] * ((amts[i]**2 * t) + 1)
     }
-    // m.vertices = m.vertices.map((vertex, i) => vertex * ((amts[i]**2 * t) + 1));
     return m;
   },
 
@@ -122,7 +121,7 @@ const anim = {
   },
 
   rotate : (axis, amt = 1, ignorenormals = false) => function do_rotate (m, t) {
-    
+
     const verts = []
     for (var i = 0, len = m.vertices.length; i < len; i++) {
       if (i%3 == 0){
@@ -154,19 +153,22 @@ const anim = {
 
   rotateFixed : (axis, amt = 1) => function do_rotateFixed (m, t) {
 
-    var verts = []
+    // var verts = []
     for (var i = 0, len = m.vertices.length; i < len; i++) {
       if (i%3 == 0){
-        var rot = mat4.create();
-        var vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
+        const rot = mat4.create();
+        const vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
         mat4.rotate(rot, rot, (amt*Math.PI), axis);
         vec4.transformMat4(vert, vert, rot);
-        
-        verts.push(vert[0], vert[1], vert[2])
+        m.vertices[i]   = vert[0]
+        m.vertices[i+1] = vert[1]
+        m.vertices[i+2] = vert[2]
+
+        // verts.push(vert[0], vert[1], vert[2])
       } else {}
     }
 
-    m.vertices = verts
+    // m.vertices = verts
 
     var norms = []
     for (var i = 0, len = m.normals.length; i < len; i++) {
@@ -179,7 +181,7 @@ const anim = {
       } else {}
     }
     m.normals = norms
-  
+
     return m
   },
 
@@ -202,7 +204,7 @@ class Animation {
     constructor(aobject, get_i) {
         this.aobject = aobject
         this.get_i = get_i
-        
+
         // the gl shape object returned by createShape
         this.transformations = [];
         this.sequence_i = 0;

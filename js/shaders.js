@@ -16,7 +16,7 @@ function initializeWebGL(canvas) {
     return gl;
 }
 
-function pointerSetup(gl, canvas, camera) {
+function pointerSetup(gl, canvas, camera, viz) {
     // mouse lock stuff
     
     canvas.requestPointerLock = canvas.requestPointerLock ||
@@ -56,60 +56,44 @@ function pointerSetup(gl, canvas, camera) {
         camera.updateBasis();
     }
 
-    const keyboardCamera = (e) => {
+
+    document.addEventListener("keyup", (e) => {
         switch (e.key) {
-            case 'w':
-                console.log(camera.MAX_FRAMES);
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,0,-1);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 'a':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(-1,0,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 's':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,0,1);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 'd':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(1,0,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
+            case 'w'     : camera.vel_z = 0; break;
+            case 'a'     : camera.vel_x = 0; break;
+            case 's'     : camera.vel_z = 0; break;
+            case 'd'     : camera.vel_x = 0; break;
+            case 'Shift' : camera.vel_y = 0; e.preventDefault(); break;
+            case ' '     : camera.vel_y = 0; e.preventDefault(); break;
+        }
+    }, false);
+
+
+    const keyboardCamera = (e) => {
+
+        switch (e.key) {
+            case 'w'     : camera.vel_z = -1; break;
+            case 'a'     : camera.vel_x = -1; break;
+            case 's'     : camera.vel_z = +1; break;
+            case 'd'     : camera.vel_x = +1; break;
+            case 'Shift' : camera.vel_y = -1; e.preventDefault(); break;
+            case ' '     : camera.vel_y = +1; e.preventDefault(); break;
+
             case 'q':
-                if (!camera.moving) {
-                    var qRot = (1.0/40.0)*2*Math.PI;
-                    qRot *= 1/camera.MAX_FRAMES; 
-                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
-                    if (camera.orbitMode) {
-                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
-                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
-                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+                var qRot = (1.0/40.0)*2*Math.PI;
+                qRot *= 1/camera.MAX_FRAMES; 
+                var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                if (camera.orbitMode) {
+                    var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                    var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                    var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
             
-                        mat4.multiply(mRotZ, mRotZ, L);
-                        mat4.multiply(mRotZ, LInv, mRotZ);
-                    }
-                    camera.moveTrans = mRotZ;
-                    camera.moving = true;
+                    mat4.multiply(mRotZ, mRotZ, L);
+                    mat4.multiply(mRotZ, LInv, mRotZ);
                 }
-                    break;
+                camera.moveTrans = mRotZ;
+                break;
             case 'e':
-                if (!camera.moving) {
                     var qRot = -1.0*(1.0/40.0)*2*Math.PI;
                     qRot *= 1/camera.MAX_FRAMES; 
                     var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
@@ -122,27 +106,8 @@ function pointerSetup(gl, canvas, camera) {
                         mat4.multiply(mRotZ, LInv, mRotZ);
                     }
                     camera.moveTrans = mRotZ;
-                    camera.moving = true;
-                }
                     break;
-            case 'Shift':
-                e.preventDefault();
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,-1,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case ' ': //space bar pressed
-                e.preventDefault();
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,1,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
+
             case 'f':
                 camera.orbitMode = !camera.orbitMode;
                 console.log(camera.orbitMode);

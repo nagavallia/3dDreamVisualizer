@@ -34,7 +34,7 @@ class SteveMarschnersDreamVisualizer {
     this.viewUp = vec3.fromValues(0.0,1.0,0.0);
     this.camera = new Camera(this.viewPoint, this.viewDir, this.viewUp, 1.0);
 
-    pointerSetup(this.gl, this.canvas, this.camera)
+    pointerSetup(this.gl, this.canvas, this.camera, this)
 
     $("#meshUpload").change(function(){
       var selected = $("#selectedMeshes");
@@ -310,7 +310,8 @@ class SteveMarschnersDreamVisualizer {
   draw(time) {
     this.bandan.update()
     updateVisualizer(this, time)
-    requestAnimationFrame(this.draw.bind(this));
+    requestAnimationFrame(this.draw.bind(this))
+    this.camera.updatePosition()
   }
 
 }
