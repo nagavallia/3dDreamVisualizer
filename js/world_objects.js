@@ -155,6 +155,19 @@ class AObject {
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);
     this.animation = null
+
+    this.texture = gl.createTexture();
+    // Step 2: Bind the texture object to the "target" TEXTURE_2D
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
+    //         so that we don't have to deal with flipping the y-coordinate.
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    // Step 4: Download the image data to the GPU.
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImg);
+    // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
+    gl.generateMipmap(gl.TEXTURE_2D);
+    // Step 6: Clean up.  Tell WebGL that we are done with the target.
+    gl.bindTexture(gl.TEXTURE_2D, null);
   }
 
   /**

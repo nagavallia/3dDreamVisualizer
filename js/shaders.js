@@ -290,6 +290,7 @@ function updateShapeFillColor(shape, color){
 
 function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false)
 {
+
     const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
@@ -437,7 +438,7 @@ function updateVisualizer(viz, time) {
 
     for (var i = 0; i < viz.objects.length; i++) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
-            ENABLE_TEXTURES ? wallTexture : null);
+            ENABLE_TEXTURES ? viz.objects[i].texture : null);
     };
 
     for (var i = 0; i < viz.particles.length; i++){
@@ -471,6 +472,7 @@ function getLights(viz)
     };
 }
 
+
 /**
  * @return a Promise that resolves once
  * the vizualizer has been initialized
@@ -481,21 +483,21 @@ const initVisualizer = (viz) => {
     viz.gl.enable(viz.gl.DEPTH_TEST);
 
     // Bind the texture
-    if (ENABLE_TEXTURES){
-        // Step 1: Create the texture object.
-        wallTexture = viz.gl.createTexture();
-        // Step 2: Bind the texture object to the "target" TEXTURE_2D
-        viz.gl.bindTexture(viz.gl.TEXTURE_2D, wallTexture);
-        // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
-        //         so that we don't have to deal with flipping the y-coordinate.
-        viz.gl.pixelStorei(viz.gl.UNPACK_FLIP_Y_WEBGL, true);
-        // Step 4: Download the image data to the GPU.
-        viz.gl.texImage2D(viz.gl.TEXTURE_2D, 0, viz.gl.RGBA, viz.gl.RGBA, viz.gl.UNSIGNED_BYTE, viz.earthImage);
-        // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
-        viz.gl.generateMipmap(viz.gl.TEXTURE_2D);
-        // Step 6: Clean up.  Tell WebGL that we are done with the target.
-        viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
-    }
+    // if (ENABLE_TEXTURES){
+    //     // Step 1: Create the texture object.
+    //     wallTexture = viz.gl.createTexture();
+    //     // Step 2: Bind the texture object to the "target" TEXTURE_2D
+    //     viz.gl.bindTexture(viz.gl.TEXTURE_2D, wallTexture);
+    //     // Step 3: (Optional) Tell WebGL that pixels are flipped vertically,
+    //     //         so that we don't have to deal with flipping the y-coordinate.
+    //     viz.gl.pixelStorei(viz.gl.UNPACK_FLIP_Y_WEBGL, true);
+    //     // Step 4: Download the image data to the GPU.
+    //     viz.gl.texImage2D(viz.gl.TEXTURE_2D, 0, viz.gl.RGBA, viz.gl.RGBA, viz.gl.UNSIGNED_BYTE, viz.earthImage);
+    //     // Step 5: (Optional) Create a mipmap so that the texture can be anti-aliased.
+    //     viz.gl.generateMipmap(viz.gl.TEXTURE_2D);
+    //     // Step 6: Clean up.  Tell WebGL that we are done with the target.
+    //     viz.gl.bindTexture(viz.gl.TEXTURE_2D, null);
+    // }
 
     const size = 1000; viz.skyboxShape = createSkybox(viz.gl, size);
 }
