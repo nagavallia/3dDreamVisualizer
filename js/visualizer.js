@@ -1,8 +1,14 @@
 let INC = 0.01;
 
+var meshes = [];
+
 function rand_color(){
   colors = [[0,1,0],[1,1,1],[1,0,0],[0,0,1],[0,1,1],[1,1,0],[1,0,1],[1,0.7,0.7],[1,0.7,0.3]]
   return colors[Math.floor(Math.random()*colors.length)];
+}
+
+function rand_mesh_and_tex(){
+  return meshes[Math.floor(Math.random()*meshes.length)];
 }
 
 class SteveMarschnersDreamVisualizer {
@@ -97,6 +103,8 @@ class SteveMarschnersDreamVisualizer {
         // audio buffer needs to be loaded to 'audio', also load meshes and textures
         // .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
         .then(loader => loader.loadImage('earthImage', 'earth.png'))
+        .then(loader => loader.loadImage('orangeImage', 'orange.png'))
+        .then(loader => loader.load3DObj('cube_obj', 'cube.obj'))
         .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
         .then(loader => loader.loadImage('skyboxX0', 'skybox/galaxy+X.png'))
         .then(loader => loader.loadImage('skyboxX1', 'skybox/galaxy-X.png'))
@@ -106,6 +114,9 @@ class SteveMarschnersDreamVisualizer {
         .then(loader => loader.loadImage('skyboxZ1', 'skybox/galaxy-Z.png'))
         // things have been loaded 
         .then(_ => {
+
+        meshes.push([this.sphere_obj, this.earthImage]);
+        meshes.push([this.cube_obj, this.earthImage]);
 
         const color1 = {
           texture: this.earthImage,
@@ -123,7 +134,8 @@ class SteveMarschnersDreamVisualizer {
         var MAX_BG_SPHERES = 4;
         for (var i=0;i<MAX_BG_SPHERES;i++){
           var color = rand_color()
-          const bg_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, color, color)
+          var mNt = rand_mesh_and_tex();
+          const bg_sphere = new AObject(this.gl, mNt[0], mNt[1], color, color)
           bg_sphere.transform(transform.translate(0,0,-8))
           bg_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES))
 
@@ -145,7 +157,8 @@ class SteveMarschnersDreamVisualizer {
         }
 
         for (var i=0;i<MAX_BG_SPHERES;i++){
-          const spike_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, rand_color(),[1,1,1])
+          var mNT = rand_mesh_and_tex();
+          const spike_sphere = new AObject(this.gl, mNT[0], mNT[1], rand_color(),[1,1,1])
           spike_sphere.transform(transform.translate(0,0,-12))
           spike_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))
 
@@ -165,7 +178,8 @@ class SteveMarschnersDreamVisualizer {
         }
 
         for (var i=0;i<2*MAX_BG_SPHERES;i++){
-          const rot_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [1,1,1],[1,1,1])
+          var mnt = rand_mesh_and_tex();
+          const rot_sphere = new AObject(this.gl, mnt[0], mnt[1], [1,1,1],[1,1,1])
           var up = i%2 == 0 ? 5 : -5;
           rot_sphere.transform(transform.translate(0,up,-15))
           rot_sphere.transform(transform.rotate([0,1,0],i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))

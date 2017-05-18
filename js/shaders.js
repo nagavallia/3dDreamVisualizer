@@ -1,4 +1,4 @@
-const ENABLE_TEXTURES = true;
+const ENABLE_TEXTURES = false;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 
 var programs = [];
@@ -314,6 +314,7 @@ function updateShapeFillColor(shape, color){
 
 function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) 
 {
+
     const exposure = 1.0; const roughness = 0.10;
     gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
@@ -501,6 +502,7 @@ function getLights(viz)
         ],
     };
 }
+
 
 /**
  * @return a Promise that resolves once
