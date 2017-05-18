@@ -102,8 +102,13 @@ class SteveMarschnersDreamVisualizer {
     return Promise.resolve(new ResourceLoader(this))
         // audio buffer needs to be loaded to 'audio', also load meshes and textures
         // .then(loader => loader.loadAudio('audio', 'data/songs/vollekraftvoraus.mp3', context))
-        .then(loader => loader.loadImage('earthImage', 'earth.png'))
-        .then(loader => loader.loadImage('orangeImage', 'orange.png'))
+        .then(loader => loader.loadImage('earthImage', 'earth.jpg'))
+        .then(loader => loader.loadImage('jupImage', 'jupiter.jpg'))
+        .then(loader => loader.loadImage('marsImage', 'mars.jpg'))
+        .then(loader => loader.loadImage('nepImage', 'neptune.jpg'))
+        .then(loader => loader.loadImage('moonImage', 'moon.jpg'))
+        .then(loader => loader.loadImage('sunImage', 'sun.jpg'))
+        .then(loader => loader.loadImage('plutoImage', 'pluto.jpg'))
         .then(loader => loader.load3DObj('cube_obj', 'cube.obj'))
         .then(loader => loader.load3DObj('sphere_obj', 'sphere.obj'))
         .then(loader => loader.loadImage('skyboxX0', 'skybox/galaxy+X.png'))
@@ -116,7 +121,20 @@ class SteveMarschnersDreamVisualizer {
         .then(_ => {
 
         meshes.push([this.sphere_obj, this.earthImage]);
+        meshes.push([this.sphere_obj, this.jupImage]);
+        meshes.push([this.sphere_obj, this.marsImage]);
+        meshes.push([this.sphere_obj, this.nepImage]);
+        meshes.push([this.sphere_obj, this.moonImage]);
+        meshes.push([this.sphere_obj, this.sunImage]);
+        meshes.push([this.sphere_obj, this.plutoImage]);
+
         meshes.push([this.cube_obj, this.earthImage]);
+        meshes.push([this.cube_obj, this.jupImage]);
+        meshes.push([this.cube_obj, this.marsImage]);
+        meshes.push([this.cube_obj, this.nepImage]);
+        meshes.push([this.cube_obj, this.moonImage]);
+        meshes.push([this.cube_obj, this.sunImage]);
+        meshes.push([this.cube_obj, this.plutoImage]);
 
         const color1 = {
           texture: this.earthImage,
@@ -136,6 +154,7 @@ class SteveMarschnersDreamVisualizer {
           var color = rand_color()
           var mNt = rand_mesh_and_tex();
           const bg_sphere = new AObject(this.gl, mNt[0], mNt[1], color, color)
+          bg_sphere.transform(transform.scale(Math.random()+1))
           bg_sphere.transform(transform.translate(0,0,-8))
           bg_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES))
 
@@ -159,6 +178,7 @@ class SteveMarschnersDreamVisualizer {
         for (var i=0;i<MAX_BG_SPHERES;i++){
           var mNT = rand_mesh_and_tex();
           const spike_sphere = new AObject(this.gl, mNT[0], mNT[1], rand_color(),[1,1,1])
+          spike_sphere.transform(transform.scale(Math.random()+1))
           spike_sphere.transform(transform.translate(0,0,-12))
           spike_sphere.transform(transform.rotate([0,1,0],2*i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))
 
@@ -180,6 +200,7 @@ class SteveMarschnersDreamVisualizer {
         for (var i=0;i<2*MAX_BG_SPHERES;i++){
           var mnt = rand_mesh_and_tex();
           const rot_sphere = new AObject(this.gl, mnt[0], mnt[1], [1,1,1],[1,1,1])
+          rot_sphere.transform(transform.scale(Math.random()+1))
           var up = i%2 == 0 ? 5 : -5;
           rot_sphere.transform(transform.translate(0,up,-15))
           rot_sphere.transform(transform.rotate([0,1,0],i/MAX_BG_SPHERES+1/MAX_BG_SPHERES))
@@ -200,8 +221,8 @@ class SteveMarschnersDreamVisualizer {
           this.objects.push(rot_sphere)
         }
 
-        const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
-        globe.transform(transform.scale(-20))
+        // const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
+        // globe.transform(transform.scale(-20))
         //this.objects.push(globe)
         
         var gl = this.gl;

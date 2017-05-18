@@ -401,11 +401,12 @@ function updateVisualizer(viz, time) {
             survivors.push(particle);
         }
     }
-
-    if (viz.lightHigh() > 0.33){
+    console.log(survivors.length)
+    if (viz.lightHigh() > 0.33 && survivors.length < 15){
+        console.log('add a new one')
         survivors.push(new PObject(viz.gl, 1,
             [viz.camera.viewPoint[0]+3*Math.random()-1.5, viz.camera.viewPoint[1]+3*Math.random()-1.5, viz.camera.viewPoint[2]+3*Math.random()-1.5],
-            viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
+            viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 8000000));
     }
     if (Math.abs(viz.lightHigh() - viz.lastHigh) > 0.15){
         if (Math.random() > 0.6){
