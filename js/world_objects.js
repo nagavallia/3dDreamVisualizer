@@ -95,18 +95,36 @@ class AObject {
     this.gl = gl;
     this.mesh = {
       vertices : parsed.c_verts,
-      normals : parsed.c_norms,
+      normalsTemp : ([].concat.apply([], parsed.i_norms.map( index => {
+        return [parsed.c_norms[3*index], parsed.c_norms[3*index+1], parsed.c_norms[3*index+2]]
+      }))),
       lineInd : ([].concat.apply([], parsed.i_verts.map((vert, i) => { switch(i % 3){
         case 0: 
         case 1: return [vert, parsed.i_verts[i+1]]
         case 2: return [vert, parsed.i_verts[i-2]]
       }}))),
-      uvs : parsed.c_uvt,
+       uvsTemp : ([].concat.apply([], parsed.i_uvt.map( index => {
+         return [parsed.c_uvt[2*index], 1.0 - parsed.c_uvt[2*index+1]]
+       }))),
       triInd : parsed.i_verts,
-      //normInd : parsed.i_norms,
       lineColor : lColor,
       fillColor : color,
     }
+    this.mesh.uvs = new Array(this.mesh.uvsTemp.length);
+    var i = 0;
+    parsed.i_verts.forEach(index => {
+      this.mesh.uvs[2*index] = this.mesh.uvsTemp[2*i];
+      this.mesh.uvs[2*index+1] = this.mesh.uvsTemp[2*i+1]
+      i++;
+    });
+    this.mesh.normals = new Array(this.mesh.normalsTemp.length);
+    var j = 0;
+    parsed.i_verts.forEach(index => {
+      this.mesh.normals[3*index] = this.mesh.normalsTemp[3*j];
+      this.mesh.normals[3*index+1] = this.mesh.normalsTemp[3*j+1];
+      this.mesh.normals[3*index+2] = this.mesh.normalsTemp[3*j+2];
+      j++;
+    });
     this.original = jQuery.extend(true, {}, this.mesh);
     this.gl_shape = createShape(gl, this.mesh);
     this.animation = null

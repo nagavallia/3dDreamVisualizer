@@ -1,4 +1,4 @@
-const ENABLE_TEXTURES = false;
+const ENABLE_TEXTURES = true;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 
 var programs = [];
