@@ -65,13 +65,14 @@
         <tr>
             <td>
                 <span>Choose Song:</span><br />
-                <input onchange="sel_file_audio(this.files)" type="file" id="songChoice">
+                <input onchange="sel_file_audio(this.files)" type="file" id="songChoice" disabled>
             </td>
             <td id="songInputs">
                 <form>
-                    <input onclick="sel_builtin_audio(this.value)" type="radio" value="data/songs/vollekraftvoraus.mp3" checked> Volle Kraft Voraus<br />
-                    <input onclick="sel_builtin_audio(this.value)" type="radio" value="data/songs/shooting_stars.mp3"> Shooting Stars<br />
-                    <input type="radio" id="customsong" name="songname" value="whoops"> Custom (use upload)&nbsp;<span id="selectedsong" style="color: grey"></span><br />
+                    <input onclick="sel_builtin_audio(this.value)" name="songname" type="radio" value="data/songs/vollekraftvoraus.mp3" checked> Volle Kraft Voraus<br />
+                    <input onclick="sel_builtin_audio(this.value)" name="songname" type="radio" value="data/songs/shooting_stars.mp3"> Shooting Stars<br />
+                    <input onclick="switch_to_file_audio()"        name="songname" type="radio" id="customsong" value="whoops"> Custom (use upload)&nbsp;<span id="selectedsong" style="color: grey"></span><br />
+                    <span id="filedisclaimer"></span>
                 </form>
             </td>
             <td>
