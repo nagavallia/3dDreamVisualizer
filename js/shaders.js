@@ -80,7 +80,6 @@ function pointerSetup(gl, canvas, camera, viz) {
             case ' '     : e.preventDefault(); camera.vel_y = +1; break;
             case 't'     : camera.printLocation(); break;
             case '0'     : camera.vel_rot_z = +1; break;
-
             case 'q':
                 var qRot = (1.0/40.0)*2*Math.PI;
                 qRot *= 1/camera.SLOWDOWN;
@@ -426,13 +425,11 @@ function updateVisualizer(viz, time) {
     mat4.copy(normalMatrix, viz.camera.worldToCamera); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: viz.camera.worldToCamera, normals: normalMatrix };
-
-    var program = getProgram(viz,'skybox','skybox'); viz.gl.useProgram(program);
-
+    var program = getProgram(viz.gl,'skybox','skybox'); viz.gl.useProgram(program);
     var exposure = Math.max(0.5, viz.lightKick()) + 2*viz.lightHigh();
     drawSkybox(viz, viz.gl, program, transforms, exposure);
 
-    program = getProgram(viz,'main','main'); viz.gl.useProgram(program);
+    program = getProgram(viz.gl,'main','main'); viz.gl.useProgram(program);
 
     var lights = getLights(viz);
 
@@ -503,26 +500,25 @@ const initVisualizer = (viz) => {
     const size = 1000; viz.skyboxShape = createSkybox(viz.gl, size);
 }
 
-function getProgram(viz, vertName, fragName)
+function getProgram(gl, vertName, fragName)
 {
     var name = vertName+'_'+fragName;
     if (!(name in programs)) {
-        var program = createProgram(viz, vertName, fragName);
+        var program = createProgram(gl, vertName, fragName);
         program.name = name; programs[name] = program;
     }
     return programs[name];
-};
+}
 
-function createProgram(viz, vertName, fragName)
+function createProgram(gl, vertName, fragName)
 {
-    var gl = viz.gl;
     var vertexShaderId = vertName+"_vertex_program";
     var fragmentShaderId = fragName+"_fragment_program";
 
     var program = gl.createProgram();
 
-    gl.attachShader(program, createShader(viz, vertexShaderId));
-    gl.attachShader(program, createShader(viz, fragmentShaderId));
+    gl.attachShader(program, createShader(gl, vertexShaderId));
+    gl.attachShader(program, createShader(gl, fragmentShaderId));
     gl.linkProgram(program);
     gl.validateProgram(program);
 
@@ -535,10 +531,8 @@ function createProgram(viz, vertName, fragName)
     }
 };
 
-function createShader(viz, shaderScriptId)
+function createShader(gl, shaderScriptId)
 {
-    var gl = viz.gl;
-
     var shaderScript = $("#"+shaderScriptId);
     var shaderSource = shaderScript[0].text;
 
