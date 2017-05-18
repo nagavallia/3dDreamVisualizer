@@ -1,3 +1,5 @@
+
+
 /*********************************** jquery **********************************/
 var lookSlider = $("#lookSlider");
 
@@ -52,22 +54,17 @@ const sel_builtin_audio = path => loadAudio(context, path).then(audio => {
   visualizer.setAudio(audio)
 })
 
-$("#songChoice").change(function (){
-  var selectedsong = $("#selectedsong");
-  var songUpload = $("#songChoice")[0];
-
-  if ('files' in songUpload){
-    if (songUpload.files.length == 0){
-      console.log('no song selected');
-    } else {
-      var song = songUpload.files[0];
-      if ('name' in song){
-        selectedsong.text(song.name);
-        $("#customsong").prop("checked", true);
-        console.log('RIP')
-        // var loader = new ResourceLoader(this);
-        // loader.loadAudio(name, name, context);
-      }
-    }
-  }
-});
+const sel_file_audio = files => {
+  const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  if (isChrome) return alert("Chrome can't do custom audio, sorry!")
+  var file = files[0];
+  if (!file.type.match(/audio.*/)) return;
+  var reader = new FileReader();
+  reader.onload = d => context
+    .decodeAudioData(d.target.result,
+      buffer => {
+        if (!buffer) console.error('error decoding file data: ' + name)
+        else visualizer.setAudio(buffer)
+      }, console.error)
+  reader.readAsArrayBuffer(file);
+}

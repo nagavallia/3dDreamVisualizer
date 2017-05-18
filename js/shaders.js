@@ -16,9 +16,9 @@ function initializeWebGL(canvas) {
     return gl;
 }
 
-function pointerSetup(gl, canvas, camera) {
+function pointerSetup(gl, canvas, camera, viz) {
     // mouse lock stuff
-    
+
     canvas.requestPointerLock = canvas.requestPointerLock ||
                                 canvas.mozRequestPointerLock;
     document.exitPointerLock = document.exitPointerLock ||
@@ -56,92 +56,59 @@ function pointerSetup(gl, canvas, camera) {
         camera.updateBasis();
     }
 
-    const keyboardCamera = (e) => {
+
+    document.addEventListener("keyup", (e) => {
         switch (e.key) {
-            case 'w':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,0,-1);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 'a':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(-1,0,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 's':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,0,1);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case 'd':
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(1,0,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
+            case 'w'     : camera.vel_z = 0; break;
+            case 'a'     : camera.vel_x = 0; break;
+            case 's'     : camera.vel_z = 0; break;
+            case 'd'     : camera.vel_x = 0; break;
+            case 'Shift' : e.preventDefault(); camera.vel_y = 0; break;
+            case ' '     : e.preventDefault(); camera.vel_y = 0; break;
+        }
+    }, false);
+
+
+    const keyboardCamera = (e) => {
+
+        switch (e.key) {
+            case 'w'     : camera.vel_z = -1; break;
+            case 'a'     : camera.vel_x = -1; break;
+            case 's'     : camera.vel_z = +1; break;
+            case 'd'     : camera.vel_x = +1; break;
+            case 'Shift' : e.preventDefault(); camera.vel_y = -1; break;
+            case ' '     : e.preventDefault(); camera.vel_y = +1; break;
+            case 't'     : camera.printLocation(); break;
+            case '0'     : camera.vel_rot_z = +1; break;
             case 'q':
-                if (!camera.moving) {
-                    var qRot = (1.0/40.0)*2*Math.PI;
-                    qRot *= 1/camera.MAX_FRAMES; 
-                    var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
-                    if (camera.orbitMode) {
-                        var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
-                        var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
-                        var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
-            
-                        mat4.multiply(mRotZ, mRotZ, L);
-                        mat4.multiply(mRotZ, LInv, mRotZ);
-                    }
-                    camera.moveTrans = mRotZ;
-                    camera.moving = true;
+                var qRot = (1.0/40.0)*2*Math.PI;
+                qRot *= 1/camera.SLOWDOWN;
+                var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
+                if (camera.orbitMode) {
+                    var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
+                    var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
+                    var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
+
+                    mat4.multiply(mRotZ, mRotZ, L);
+                    mat4.multiply(mRotZ, LInv, mRotZ);
                 }
-                    break;
+                camera.moveTrans = mRotZ;
+                break;
             case 'e':
-                if (!camera.moving) {
                     var qRot = -1.0*(1.0/40.0)*2*Math.PI;
-                    qRot *= 1/camera.MAX_FRAMES; 
+                    qRot *= 1/camera.SLOWDOWN;
                     var mRotZ = mat4.create(); mat4.fromZRotation(mRotZ, qRot);
                     if (camera.orbitMode) {
                         var v = vec3.create(); vec3.transformMat4(v, v, camera.worldToCamera);
                         var L = mat4.create(); mat4.fromTranslation(L, vec3.negate(vec3.create(),v));
                         var LInv = mat4.create(); mat4.fromTranslation(LInv, v);
-            
+
                         mat4.multiply(mRotZ, mRotZ, L);
                         mat4.multiply(mRotZ, LInv, mRotZ);
                     }
                     camera.moveTrans = mRotZ;
-                    camera.moving = true;
-                }
                     break;
-            case 'Shift':
-                e.preventDefault();
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,-1,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
-            case ' ': //space bar pressed
-                e.preventDefault();
-                if (!camera.moving) {
-                    var wMove = vec3.fromValues(0,1,0);
-                    vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
-                    mat4.fromTranslation(camera.moveTrans, wMove);
-                    camera.moving = true;
-                }
-                break;
+
             case 'f':
                 camera.orbitMode = !camera.orbitMode;
                 console.log(camera.orbitMode);
@@ -152,42 +119,43 @@ function pointerSetup(gl, canvas, camera) {
                 var viewUp = vec3.fromValues(0.0,1.0,0.0);
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
+                break;
             case '2':
                 var viewPoint = vec3.fromValues(0.0,0.0,-4.0);
                 var viewDir = vec3.fromValues(0.0,0.0,4.0);
                 var viewUp = vec3.fromValues(0.0,1.0,0.0);
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
+                break;
             case '3':
                 var viewPoint = vec3.fromValues(4.0,0.0,0.0);
                 var viewDir = vec3.fromValues(-4.0,0.0,0.0);
                 var viewUp = vec3.fromValues(0.0,1.0,0.0);
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
+                break;
             case '4':
                 var viewPoint = vec3.fromValues(-4.0,0.0,0.0);
                 var viewDir = vec3.fromValues(4.0,0.0,0.0);
                 var viewUp = vec3.fromValues(0.0,1.0,0.0);
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
-            case '5':
-                var viewPoint = vec3.fromValues(0.0,4.0,0.0);
-                var viewDir = vec3.fromValues(0.0,-4.0,0.0);
-                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+                break;
+            case '5': // Looks at ithaca
+                var viewPoint = vec3.fromValues(8.618024826049805, 1.6761150360107422, -1.3540992736816406)
+                var viewDir = vec3.fromValues(-0.7343046069145203, -0.1788531392812729, 0.6548345685005188)
+                var viewUp = vec3.fromValues(-0.12561450898647308, 0.9838074445724487, 0.1278434842824936)
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
-            case '6':
-                var viewPoint = vec3.fromValues(0.0,-4.0,0.0);
-                var viewDir = vec3.fromValues(0.0,4.0,0.0);
-                var viewUp = vec3.fromValues(0.0,0.0,1.0);
+                break;
+            case '6': // spikey globe
+                var viewPoint = vec3.fromValues(-8.97063159942627, 1.4747135639190674, 10.680480003356934)
+                var viewDir = vec3.fromValues(0.686893105506897, 0.10600747168064117, -0.7189855575561523)
+                var viewUp = vec3.fromValues(0.37532028555870056, 0.7954299449920654, 0.47584232687950134)
+
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
-                break; 
+                break;
             case '7':
                 var viewPoint = vec3.fromValues(11/1.3,15/1.3,16/1.3);
                 var viewDir = vec3.fromValues(-1.7,-2.56,-2.56);
@@ -195,10 +163,19 @@ function pointerSetup(gl, canvas, camera) {
 
                 camera.relocate(viewPoint, viewDir, viewUp, 1.0);
                 break;
+
+            case '8':
+                var viewPoint = vec3.fromValues(1.1667288541793823, 0.8279969096183777, -9.650725364685059)
+                var viewDir = vec3.fromValues(-0.9699810743331909, 0.009018934331834316, 0.24301311373710632)
+                var viewUp = vec3.fromValues(0.18756301701068878, -0.6082971692085266, 0.7712293267250061)
+
+                camera.relocate(viewPoint, viewDir, viewUp, 1.0);
+                break;
+
         }
         camera.updateBasis();
     }
-    
+
     document.addEventListener("keydown", keyboardCamera, false);
 
     const lockChangeAlert = () => {
@@ -222,7 +199,7 @@ function pointerSetup(gl, canvas, camera) {
            canvas.webkitRequestFullScreen();
         } else {
             canvas.mozRequestFullScreen();
-        }            
+        }
     }
 
     const exitfullscreen = () => {
@@ -232,11 +209,11 @@ function pointerSetup(gl, canvas, camera) {
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
     }
-    
+
     canvas.addEventListener("click",fullscreen)
     document.addEventListener('webkitfullscreenchange', exitfullscreen, false);
     document.addEventListener('mozfullscreenchange', exitfullscreen, false);
-    document.addEventListener("fullscreenchange", exitfullscreen, false );   
+    document.addEventListener("fullscreenchange", exitfullscreen, false );
 
     // pointer lock event listeners
     // Hook pointer lock state change events for different browsers
@@ -246,40 +223,40 @@ function pointerSetup(gl, canvas, camera) {
 
 function createShape(gl, data) {
     var shape = {};
-    
+
     shape.vertexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.vertices), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    
+
     shape.triIndexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.triInd), gl.STATIC_DRAW);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-    
+
     if ('normals' in data) {
         shape.normBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.normals), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null); }
-    
+
     if ('uvs' in data) {
         shape.uvBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, shape.uvBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data.uvs), gl.STATIC_DRAW);
         gl.bindBuffer(gl.ARRAY_BUFFER, null); }
-    
+
     if ('lineInd' in data) {
         shape.lineIndexBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.lineIndexBuffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data.lineInd), gl.STATIC_DRAW);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null); 
-        shape.lineLen = data.lineInd.length; }    
-    
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+        shape.lineLen = data.lineInd.length; }
+
     shape.triLen = data.triInd.length;
     shape.lineColor = data.lineColor;
     shape.fillColor = data.fillColor;
-    
+
     return shape;
 }
 
@@ -290,8 +267,8 @@ function createSkybox(gl, size)
     vertices.push(-size,-size,size, size,-size,size, size,size,size, -size,size,size, -size,-size,-size, size,-size,-size, size,size,-size, -size,size,-size);
     indexes.push(4,0,7, 7,0,3, 0,1,3, 3,1,2, 1,5,2, 2,5,6, 5,4,6, 6,4,7, 0,2,7, 7,2,6, 4,5,0, 0,5,1);
 
-    var data = { vertices: vertices, triInd: indexes }; 
-    
+    var data = { vertices: vertices, triInd: indexes };
+
     return createShape(gl, data);
 }
 
@@ -311,22 +288,22 @@ function updateShapeFillColor(shape, color){
     shape.fillColor = color;
 }
 
-function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false) 
+function drawShape(gl, shape, program, transforms, lights, texture = null, particles = false)
 {
 
     const exposure = 1.0; const roughness = 0.10;
-    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);  
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);
     gl.uniform1f(gl.getUniformLocation(program,"roughness"), roughness);
-        
-    gl.uniform3fv(gl.getUniformLocation(program,"lightColors"), lights.colors);  
-    gl.uniform3fv(gl.getUniformLocation(program,"lightPositions"), lights.positions);   
-    
+
+    gl.uniform3fv(gl.getUniformLocation(program,"lightColors"), lights.colors);
+    gl.uniform3fv(gl.getUniformLocation(program,"lightPositions"), lights.positions);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.vertexBuffer);
     const positionLocation = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    
+
     gl.bindBuffer(gl.ARRAY_BUFFER, shape.normBuffer);
     const normalLocation = gl.getAttribLocation(program, "normal");
     gl.enableVertexAttribArray(normalLocation);
@@ -342,7 +319,7 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "normalMatrix"), false, transforms.normals);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, transforms.camera);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
-    
+
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, shape.triIndexBuffer);
 
     const useTexsLocation = gl.getUniformLocation(program, "use_textures");
@@ -375,42 +352,37 @@ function drawShape(gl, shape, program, transforms, lights, texture = null, parti
 
 function drawSkybox(viz, gl, program, transforms, exposure)
 {
-    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure); 
-    
+    gl.uniform1f(gl.getUniformLocation(program,"exposure"), exposure);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, viz.skyboxShape.vertexBuffer);
     const positionLocation = gl.getAttribLocation(program, "position");
     gl.enableVertexAttribArray(positionLocation);
     gl.vertexAttribPointer(positionLocation, 3, gl.FLOAT, false, 4 * 3, 0);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-    
-    var cameraMatrix = mat4.create(); 
-    var lookPoint = vec3.clone(viz.camera.lookPoint); 
+
+    var cameraMatrix = mat4.create();
+    var lookPoint = vec3.clone(viz.camera.lookPoint);
     vec3.subtract(lookPoint, lookPoint, viz.camera.viewPoint);
-    mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp); 
+    mat4.lookAt(cameraMatrix, vec3.create(), lookPoint, viz.camera.viewUp);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "cameraMatrix"), false, cameraMatrix);
     gl.uniformMatrix4fv(gl.getUniformLocation(program, "projectionMatrix"), false, transforms.projection);
-        
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap); 
+
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_CUBE_MAP, viz.skyboxCubemap);
     gl.uniform1i(gl.getUniformLocation(program,'skyboxTexture'), 0);
-    
+
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, viz.skyboxShape.triIndexBuffer);
     gl.drawElements(gl.TRIANGLES, viz.skyboxShape.triLen, gl.UNSIGNED_SHORT, 0);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
 function updateVisualizer(viz, time) {
-    viz.camera.MAX_FRAMES = 25 - ($("#movementSlider").slider("value"));
+    viz.camera.SLOWDOWN = 25 - ($("#movementSlider").slider("value"));
 
     invertVert = $("#invertLook")[0].checked;
     invertHoriz = $("#invertHoriz")[0].checked;
 
-    if (viz.camera.moving) {
-        viz.camera.frameCount++;
-        // console.log(viz.camera.moveVec + "   " + viz.camera.frameCount);
-        mat4.multiply(viz.camera.cameraToWorld, viz.camera.cameraToWorld, viz.camera.moveTrans);
-        viz.camera.updateBasis();
-        if (viz.camera.frameCount == viz.camera.MAX_FRAMES) {viz.camera.moving = false; viz.camera.frameCount = 0;}
-    }
+    mat4.multiply(viz.camera.cameraToWorld, viz.camera.cameraToWorld, viz.camera.moveTrans);
+    viz.camera.updateBasis();
 
     for (var i = 0; i < viz.objects.length; i++) {
         let object = viz.objects[i]
@@ -431,7 +403,7 @@ function updateVisualizer(viz, time) {
     }
 
     if (viz.lightHigh() > 0.33){
-        survivors.push(new PObject(viz.gl, 1, 
+        survivors.push(new PObject(viz.gl, 1,
             [viz.camera.viewPoint[0]+3*Math.random()-1.5, viz.camera.viewPoint[1]+3*Math.random()-1.5, viz.camera.viewPoint[2]+3*Math.random()-1.5],
             viz.lightHigh()*2, viz.colors[Math.floor(viz.colors.length*Math.random())], 80000000));
     }
@@ -443,29 +415,27 @@ function updateVisualizer(viz, time) {
 
     viz.gl.clearColor(...viz.clearColor, 0);
     viz.gl.clear(viz.gl.COLOR_BUFFER_BIT);
-   
+
     var projectionMatrix = mat4.create(); const FOV = 70.0; const NEAR = 0.1; const FAR = 2000.0;
     mat4.perspective(projectionMatrix, FOV, viz.canvas.width / viz.canvas.height, NEAR, FAR);
 
     // var cameraMatrix = mat4.create();
     // mat4.lookAt(cameraMatrix, viz.camera.viewPoint, viz.camera.lookPoint, viz.camera.viewUp);
 
-    var normalMatrix = mat4.create();    
+    var normalMatrix = mat4.create();
     mat4.copy(normalMatrix, viz.camera.worldToCamera); mat4.invert(normalMatrix, normalMatrix); mat4.transpose(normalMatrix, normalMatrix);
 
     var transforms = { projection: projectionMatrix, camera: viz.camera.worldToCamera, normals: normalMatrix };
-    
-    var program = getProgram(viz.gl,'skybox','skybox'); viz.gl.useProgram(program);    
-    
+    var program = getProgram(viz.gl,'skybox','skybox'); viz.gl.useProgram(program);
     var exposure = Math.max(0.5, viz.lightKick()) + 2*viz.lightHigh();
-    drawSkybox(viz, viz.gl, program, transforms, exposure);        
+    drawSkybox(viz, viz.gl, program, transforms, exposure);
 
     program = getProgram(viz.gl,'main','main'); viz.gl.useProgram(program);
 
     var lights = getLights(viz);
 
     viz.clearColor = viz.bgColor.map(color => 3*viz.lightHigh()*color);
-    
+
     for (var i = 0; i < viz.objects.length; i++) {
         drawShape(viz.gl, viz.objects[i].gl_shape, program, transforms, lights,
             ENABLE_TEXTURES ? viz.objects[i].texture : null);
@@ -486,13 +456,13 @@ function updateVisualizer(viz, time) {
 
 function getLights(viz)
 {
-    return { 
+    return {
         positions: [
             viz.camera.viewPoint[0] - 40*viz.camera.viewDir[0], viz.camera.viewPoint[1] - 40*viz.camera.viewDir[1], viz.camera.viewPoint[2] - 40*viz.camera.viewDir[2],
             0,5,0,
             4.0,0.0,3.0,
             -4,0,3,
-        ], 
+        ],
         colors: [
             800,800,800,
             viz.lightHigh()*300,viz.lightHigh()*300,viz.lightHigh()*300,
@@ -535,15 +505,15 @@ const initVisualizer = (viz) => {
 function getProgram(gl, vertName, fragName)
 {
     var name = vertName+'_'+fragName;
-    if (!(name in programs)) { 
+    if (!(name in programs)) {
         var program = createProgram(gl, vertName, fragName);
         program.name = name; programs[name] = program;
-    }        
+    }
     return programs[name];
-};
+}
 
-function createProgram(gl, vertName, fragName) 
-{        
+function createProgram(gl, vertName, fragName)
+{
     var vertexShaderId = vertName+"_vertex_program";
     var fragmentShaderId = fragName+"_fragment_program";
 
@@ -563,8 +533,8 @@ function createProgram(gl, vertName, fragName)
     }
 };
 
-function createShader(gl, shaderScriptId) 
-{        
+function createShader(gl, shaderScriptId)
+{
     var shaderScript = $("#"+shaderScriptId);
     var shaderSource = shaderScript[0].text;
 

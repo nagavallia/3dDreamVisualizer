@@ -12,9 +12,7 @@ class Camera {
       this.viewHeight = 1.0;
       this.orbitMode = false;
 
-      this.moving = false;
-      this.frameCount = 0;
-      this.MAX_FRAMES = 10;
+      this.SLOWDOWN = 10;
       this.moveTrans = mat4.create();
 
       this.lookPoint = vec3.create();
@@ -32,7 +30,18 @@ class Camera {
 
       this.updateVectors();
 
+      this.vel_x = 0
+      this.vel_y = 0
+      this.vel_z = 0
+      this.vel_rot_z = 0
+
       // this.updateBasis();
+  }
+
+  updatePosition() {
+    var wMove = vec3.fromValues(this.vel_x, this.vel_y, this.vel_z);
+    vec3.scale(wMove, wMove, 1/this.SLOWDOWN);
+    mat4.fromTranslation(this.moveTrans, wMove);
   }
 
    updateVectors() {
@@ -69,6 +78,10 @@ class Camera {
     this.updateVectors();
   }
 
+  printLocation() {
+    console.log(this.viewPoint, this.viewDir, this.viewUp, this.projD)
+  }
+
   relocate(viewPoint, viewDir, viewUp, projD) {
       this.viewPoint = viewPoint;
       this.viewDir = viewDir;
@@ -89,11 +102,25 @@ class Camera {
   }
 }
 
+// class Mesh {
+//   constructor(vertices, normals, lineInd, uvs, triInd, lineColor, fillColor) {
+//     this.vertices  = vertices
+//     this.normals   = normals
+//     this.lineInd   = lineInd
+//     this.uvs       = uvs
+//     this.triInd    = triInd
+//     this.lineColor = lineColor
+//     this.fillColor = fillColor
+//   }
+// }
+
 class AObject {
   constructor (gl, raw_mesh, textureImg, color = [1.0, 0.0, 0.0], lColor = [0,0,0]) {
     const parsed = K3D.parse.fromOBJ(raw_mesh);
     this.gl = gl;
     this.mesh = {
+      vertices: parsed.c_verts,
+      normals : parsed.c_norms,
       vertices : parsed.c_verts,
       normalsTemp : ([].concat.apply([], parsed.i_norms.map( index => {
         return [parsed.c_norms[3*index], parsed.c_norms[3*index+1], parsed.c_norms[3*index+2]]
