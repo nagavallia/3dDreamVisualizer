@@ -1,14 +1,6 @@
 
-make webpage look nicer
-
-//support user uploaded meshes
-
 support user uploaded songs
 
 more default meshes
 
-textures! 
-
-//animate normals (feasible?)
-
-//normal maps (low priority)
+randomize textures
