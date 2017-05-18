@@ -52,11 +52,23 @@ visualizer
 
 const sel_builtin_audio = path => loadAudio(context, path).then(audio => {
   visualizer.setAudio(audio)
+  $('#songChoice').attr('disabled', true);
 })
 
+const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+if (isChrome) {
+  $('#customsong').attr('disabled', true);
+  $('#filedisclaimer').html('Chrome can\'t do custom songs.')
+}
+
+switch_to_file_audio = () => {
+  // const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
+  // if (isChrome) return alert("Chrome can't do custom audio, sorry!")
+  $('#songChoice').attr('disabled', false);
+}
+
 const sel_file_audio = files => {
-  const isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-  if (isChrome) return alert("Chrome can't do custom audio, sorry!")
+  $('#customsong').attr('checked', true)
   var file = files[0];
   if (!file.type.match(/audio.*/)) return;
   var reader = new FileReader();
