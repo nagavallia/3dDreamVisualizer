@@ -116,7 +116,7 @@ class SteveMarschnersDreamVisualizer {
         .then(_ => {
 
         meshes.push([this.sphere_obj, this.earthImage]);
-        meshes.push([this.sphere_obj, this.earthImage]);
+        meshes.push([this.cube_obj, this.earthImage]);
 
         const color1 = {
           texture: this.earthImage,
