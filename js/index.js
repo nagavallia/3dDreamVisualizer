@@ -41,10 +41,10 @@ visualizer
   visualizer.setAudio(audio)
 })
 .then(() => {
-  // playbutton.removeAttribute('disabled')
-  // playbutton.innerHTML = 'Play/pause'
-  // playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
-  document.addEventListener('keypress', (event) => {if (event.key == 'p'){ visualizer.togglePlayback() } else if (event.key == 'u'){ visualizer.explode()}})
+  //playbutton.removeAttribute('disabled')
+  //playbutton.innerHTML = 'Play/pause'
+  //playbutton.addEventListener('click', () => { visualizer.togglePlayback() });
+  document.addEventListener('keydown', (event) => {if (event.key == 'p'){ visualizer.togglePlayback(); } else if (event.key == 'u'){ visualizer.explode()}})
 })
 .catch(console.error)
 

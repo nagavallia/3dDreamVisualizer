@@ -1,4 +1,4 @@
-const ENABLE_TEXTURES = false;
+const ENABLE_TEXTURES = true;
 const clientRect = $("#webglCanvas")[0].getBoundingClientRect();
 
 var programs = [];
@@ -193,8 +193,8 @@ function pointerSetup(gl, canvas, camera, viz) {
 
     const exitfullscreen = () => {
         if (!document.webkitIsFullScreen && !document.mozFullScreen){
-            canvas.width = 800;
-            canvas.height = 600;
+            canvas.width = 1280;
+            canvas.height = 720;
             gl.viewport(0, 0, canvas.width, canvas.height);
         }
     }
