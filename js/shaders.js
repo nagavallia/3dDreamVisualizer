@@ -59,7 +59,6 @@ function pointerSetup(gl, canvas, camera) {
     const keyboardCamera = (e) => {
         switch (e.key) {
             case 'w':
-                console.log(camera.MAX_FRAMES);
                 if (!camera.moving) {
                     var wMove = vec3.fromValues(0,0,-1);
                     vec3.scale(wMove, wMove, 1/camera.MAX_FRAMES);
