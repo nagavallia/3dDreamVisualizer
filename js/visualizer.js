@@ -34,6 +34,9 @@ class SteveMarschnersDreamVisualizer {
     this.clearColor = this.bgColor;
     this.respawn = [];
 
+    // sensitivity
+    this.sensitivity = .33
+
     // initialize camera
     this.viewPoint = vec3.fromValues(0.0,0.0,4.0);
     this.viewDir = vec3.fromValues(0.0,0.0,-4.0);
@@ -246,7 +249,12 @@ class SteveMarschnersDreamVisualizer {
       .catch(console.error)
   }
 
-  setAudio(audio) {
+  setAudio(audio, settings) {
+
+    if (settings) {
+      explosion_slider.slider('value', settings.explosiveness * 100);
+    }
+
     const play = this.isPlaying
     // Stop playback
     if (this.isPlaying) {

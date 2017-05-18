@@ -17,6 +17,15 @@ movementSlider.slider({
     value: 15
 });
 
+const explosion_slider = $("#explosion_slider")
+
+explosion_slider.slider({
+    min: 20,
+    max: 80,
+    value: 33
+});
+
+
 var invertVert = $("#invertLook")[0].checked;
 var invertHoriz = $("#invertHoriz")[0].checked;
 
@@ -51,7 +60,11 @@ visualizer
 .catch(console.error)
 
 const sel_builtin_audio = path => loadAudio(context, path).then(audio => {
-  visualizer.setAudio(audio)
+  var settings;
+  if (path.indexOf('shooting') > 0) settings = { explosiveness : 0.52 }
+  else settings = { explosiveness : 0.33 }
+
+  visualizer.setAudio(audio, settings)
   $('#songChoice').attr('disabled', true);
 })
 
@@ -80,3 +93,7 @@ const sel_file_audio = files => {
       }, console.error)
   reader.readAsArrayBuffer(file);
 }
+
+
+
+
