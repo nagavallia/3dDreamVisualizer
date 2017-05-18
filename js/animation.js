@@ -87,16 +87,16 @@ const anim = {
 
   // each frame randomly scale vertex.xyz
   waves : (min, max) => function do_waves (m, t) {
-    const amts = Array.apply(null, {length: m.vertices.length})
+    // const amts = Array.apply(null, {length: m.vertices.length})
 
-    // Populate random amts
-    for (var i = amts.length - 1; i >= 0; i--) {
-      amts[i] = Math.random(min,max)
-    };
+    // // Populate random amts
+    // for (var i = amts.length - 1; i >= 0; i--) {
+    //   amts[i] = Math.random(min,max)
+    // };
 
     // apply amts to vertices
     for (var i = 0, len = m.vertices.length; i < len; i++) {
-      m.vertices[i] = m.vertices[i] * ((amts[i]**2 * t) + min)
+      m.vertices[i] = m.vertices[i] * ((Math.random(min,max)**2 * t) + min)
     }
 
     return m;
@@ -122,31 +122,30 @@ const anim = {
 
   rotate : (axis, amt = 1, ignorenormals = false) => function do_rotate (m, t) {
 
-    const verts = []
     for (var i = 0, len = m.vertices.length; i < len; i++) {
       if (i%3 == 0){
         const rot = mat4.create();
         const vert = vec4.fromValues(m.vertices[i], m.vertices[i+1], m.vertices[i+2],1);
         mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
         vec4.transformMat4(vert, vert, rot);
-        verts.push(vert[0], vert[1], vert[2])
+        m.vertices[i]   = vert[0]
+        m.vertices[i+1] = vert[1]
+        m.vertices[i+2] = vert[2]
       } else { }
     }
 
-    m.vertices = verts
-
     if (!ignorenormals) {
-      const norms = []
       for (var i = 0, len = m.normals.length; i < len; i++) {
         if (i%3 == 0){
           const rot = mat4.create();
           const vert = vec4.fromValues(m.normals[i], m.normals[i+1], m.normals[i+2],0);
           mat4.rotate(rot, rot, t * (amt*Math.PI), axis);
           vec4.transformMat4(vert, vert, rot);
-          norms.push(vert[0], vert[1], vert[2])
+          m.normals[i]   = vert[0]
+          m.normals[i+1] = vert[1]
+          m.normals[i+2] = vert[2]
         } else { }
       }
-      m.normals = norms
     }
     return m
   },
@@ -163,24 +162,20 @@ const anim = {
         m.vertices[i]   = vert[0]
         m.vertices[i+1] = vert[1]
         m.vertices[i+2] = vert[2]
-
-        // verts.push(vert[0], vert[1], vert[2])
-      } else {}
+      }
     }
 
-    // m.vertices = verts
-
-    var norms = []
     for (var i = 0, len = m.normals.length; i < len; i++) {
       if (i%3 == 0){
         var rot = mat4.create();
         var vert = vec4.fromValues(m.normals[i], m.normals[i+1], m.normals[i+2],0);
         mat4.rotate(rot, rot, (amt*Math.PI), axis);
         vec4.transformMat4(vert, vert, rot);
-        norms.push(vert[0], vert[1], vert[2])
-      } else {}
+        m.normals[i]   = vert[0]
+        m.normals[i+1] = vert[1]
+        m.normals[i+2] = vert[2]
+      }
     }
-    m.normals = norms
 
     return m
   },
