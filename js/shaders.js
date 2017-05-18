@@ -375,6 +375,8 @@ function drawSkybox(viz, gl, program, transforms, exposure)
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 
+
+
 function updateVisualizer(viz, time) {
     viz.camera.SLOWDOWN = 25 - ($("#movementSlider").slider("value"));
 
@@ -401,8 +403,9 @@ function updateVisualizer(viz, time) {
             survivors.push(particle);
         }
     }
-    console.log(survivors.length)
-    if (viz.lightHigh() > 0.33 && survivors.length < 15){
+
+    console.log(explosion_slider.slider("value")/100)
+    if (viz.lightHigh() > explosion_slider.slider("value")/100){
         console.log('add a new one')
         survivors.push(new PObject(viz.gl, 1,
             [viz.camera.viewPoint[0]+3*Math.random()-1.5, viz.camera.viewPoint[1]+3*Math.random()-1.5, viz.camera.viewPoint[2]+3*Math.random()-1.5],
