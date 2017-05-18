@@ -12,9 +12,7 @@ class Camera {
       this.viewHeight = 1.0;
       this.orbitMode = false;
 
-      this.moving = false;
-      this.frameCount = 0;
-      this.MAX_FRAMES = 10;
+      this.SLOWDOWN = 10;
       this.moveTrans = mat4.create();
 
       this.lookPoint = vec3.create();
@@ -42,9 +40,8 @@ class Camera {
 
   updatePosition() {
     var wMove = vec3.fromValues(this.vel_x, this.vel_y, this.vel_z);
-    vec3.scale(wMove, wMove, 1/this.MAX_FRAMES);
+    vec3.scale(wMove, wMove, 1/this.SLOWDOWN);
     mat4.fromTranslation(this.moveTrans, wMove);
-    this.moving = true;
   }
 
    updateVectors() {
@@ -79,6 +76,10 @@ class Camera {
     vec3.add(this.lookPoint, this.viewPoint, this.viewDir);
 
     this.updateVectors();
+  }
+
+  printLocation() {
+    console.log(this.viewPoint, this.viewDir, this.viewUp, this.projD)
   }
 
   relocate(viewPoint, viewDir, viewUp, projD) {

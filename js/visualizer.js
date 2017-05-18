@@ -189,45 +189,6 @@ class SteveMarschnersDreamVisualizer {
         const globe = new AObject(this.gl, this.sphere_obj, this.earthImage, [0.3,0.3,0.3],[1,1,1])
         globe.transform(transform.scale(-20))
         //this.objects.push(globe)
-
-        // /** Another sphere */
-        // const high_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,1,0])
-        // high_sphere.animation = new Animation(high_sphere, iKick);
-        // high_sphere.animation.addSequence([
-        //     anim.translate(-1,1,0),
-        //     anim.compose([
-        //         anim.translate(1,-1,0),
-        //         anim.spikes2(1,2.5),
-        //         anim.translate(-1,1, 0)
-        //     ])
-        // ])
-        // this.objects.push(high_sphere)
-
-        // /** one more */
-        // const kick_sphere2 = new AObject(this.gl, this.sphere_obj, this.earthImage, [0,0,1], [1,1,1])
-        // kick_sphere2.animation = new Animation(kick_sphere2, iKick);
-        // kick_sphere2.animation.addSequence([
-        //   anim.translate(1,0,0),
-        //   anim.translate(0,1,0),
-        //   anim.translate(-2,0,0),
-        //   anim.translate(0,-2,0),
-        //   anim.translate(2,0,0),
-        //   anim.translate(0,2,0)
-        // ])
-        // this.objects.push(kick_sphere2)
-
-
-        // const time_sphere = new AObject(this.gl, this.sphere_obj, this.earthImage)
-        // time_sphere.animation = new Animation(time_sphere, iTime);
-        // time_sphere.animation.addSequence([
-        //   anim.translate(1,0,0),
-        //   anim.translate(0,1,0),
-        //   anim.translate(-2,0,0),
-        //   anim.translate(0,-2,0),
-        //   anim.translate(2,0,0),
-        //   anim.translate(0,2,0)
-        // ])
-        // this.objects.push(time_sphere)
         
         var gl = this.gl;
         var cubemap = gl.createTexture();
